@@ -19,7 +19,6 @@ import {
 } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
 class AppUpdater {
@@ -36,6 +35,15 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.on('main-window', async (event, arg) => {
+  console.log(arg);
+  if (arg && arg != null) {
+    if (arg.event === 'focusEvent') {
+      // mainWindow?.focus();
+    }
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -88,6 +96,7 @@ const createWindow = async () => {
     height: 680,
     icon: getAssetPath('icon.png'),
     webPreferences: {
+      nodeIntegration: true,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
@@ -95,7 +104,7 @@ const createWindow = async () => {
   });
   mainWindow.setPosition(
     mainWindow.getPosition()[0],
-    mainWindow.getPosition()[1] / 2,
+    mainWindow.getPosition()[1] / 2 + 200,
   );
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
@@ -150,6 +159,7 @@ const createWindow = async () => {
     }
   });
   mainWindow.setSkipTaskbar(true);
+  // mainWindow.setIgnoreMouseEvents(true);
 };
 
 /**

@@ -1,0 +1,10 @@
+li:hover {
+  background-color: #c1c1c4;
+  cursor: pointer;
+}
+li:focus {
+  background-color: #1677ff;
+}
+#result > .ant-card-body {
+  padding: 2px !important;
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input, List, Avatar, Card } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import './index.css';
 
 function Search() {
   const inputRef = useRef(null);
@@ -25,9 +26,16 @@ function Search() {
     }
     setResult(resultList);
   };
+  const focusEvent = () => {
+    inputRef.current.focus();
+    window.electron.ipcRenderer.sendMessage('main-window', {
+      event: 'focusMainWindow',
+    });
+  };
   return (
     <div>
       <Input
+        tabIndex={0}
         ref={inputRef}
         placeholder="Start typing..."
         size="large"
@@ -40,25 +48,37 @@ function Search() {
           borderWidth: '2px',
         }}
       />
-      <Card style={{ width: 670, top: 15 }} hidden={resultHide}>
-        <List
-          itemLayout="horizontal"
-          dataSource={result}
-          renderItem={(item, index) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar
-                    src={`https://xsgames.co/randomusers/avatar.php?g=pixel&key=${index}`}
-                  />
-                }
-                title={<a href="https://ant.design">{item.title}</a>}
-                description="Ant Design, a design language for background applications, is refined by Ant UED Team"
-              />
-            </List.Item>
-          )}
-        />
-      </Card>
+      {resultHide ? null : (
+        <Card id="result" style={{ width: 670, top: 15 }}>
+          <List
+            itemLayout="horizontal"
+            dataSource={result}
+            renderItem={(item, index) => (
+              <List.Item
+                tabIndex={index + 1}
+                onClick={() => {
+                  console.log(index);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    console.log(index);
+                  }
+                }}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <Avatar
+                      src={`https://xsgames.co/randomusers/avatar.php?g=pixel&key=${index}`}
+                    />
+                  }
+                  title={item.title}
+                  description="Ant Design, a design language for background applications, is refined by Ant UED Team"
+                />
+              </List.Item>
+            )}
+          />
+        </Card>
+      )}
     </div>
   );
 }
