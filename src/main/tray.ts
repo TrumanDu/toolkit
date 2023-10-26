@@ -19,20 +19,20 @@ function createTray(window: BrowserWindow): Promise<Tray> {
       Menu.buildFromTemplate([
         {
           type: 'normal',
-          label: '显示',
+          label: '        显示        ',
           click() {
             window.show();
           },
         },
         {
-          label: '系统设置',
+          label: '        系统设置        ',
           click() {
             openSettings();
           },
         },
         { type: 'separator' },
         {
-          label: '帮助文档',
+          label: '        帮助文档        ',
           click: () => {
             process.nextTick(() => {
               shell.openExternal('https://github.com/TrumanDu/toolkit');
@@ -40,7 +40,7 @@ function createTray(window: BrowserWindow): Promise<Tray> {
           },
         },
         {
-          label: '意见反馈',
+          label: '        意见反馈        ',
           click: () => {
             process.nextTick(() => {
               shell.openExternal('https://github.com/TrumanDu/toolkit/issues');
@@ -52,14 +52,14 @@ function createTray(window: BrowserWindow): Promise<Tray> {
         isMac
           ? {
               role: 'close',
-              label: '退出',
+              label: '        退出        ',
             }
           : {
               role: 'quit',
-              label: '退出',
+              label: '        退出        ',
             },
         {
-          label: '重启',
+          label: '        重启        ',
           click() {
             app.relaunch();
             app.quit();
@@ -68,7 +68,7 @@ function createTray(window: BrowserWindow): Promise<Tray> {
 
         { type: 'separator' },
         {
-          label: '关于',
+          label: '        关于        ',
           click() {
             dialog.showMessageBox({
               title: 'Toolkit',
