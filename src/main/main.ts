@@ -20,6 +20,7 @@ import {
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
+import createTray from './tray';
 
 class AppUpdater {
   constructor() {
@@ -145,19 +146,7 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
   // 创建系统托盘图标
-  const iconPath = getAssetPath('icon.png');
-  const appTray = new Tray(iconPath);
-  // 当用户点击托盘图标时显示或隐藏窗口
-  appTray.on('click', () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide();
-      } else {
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    }
-  });
+  createTray(mainWindow);
   mainWindow.setSkipTaskbar(true);
   // mainWindow.setIgnoreMouseEvents(true);
 };
