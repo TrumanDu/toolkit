@@ -57,7 +57,10 @@ function Search() {
               <List.Item
                 tabIndex={index + 1}
                 onClick={() => {
-                  console.log(index);
+                  window.electron.ipcRenderer.sendMessage('trigger', {
+                    type: 'openPlugin',
+                    name: index,
+                  });
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {

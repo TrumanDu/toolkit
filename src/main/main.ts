@@ -9,18 +9,12 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import {
-  app,
-  BrowserWindow,
-  globalShortcut,
-  Tray,
-  shell,
-  ipcMain,
-} from 'electron';
+import { app, BrowserWindow, globalShortcut, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, getAssetPath } from './util';
 import createTray from './tray';
+import API from './api';
 
 class AppUpdater {
   constructor() {
@@ -77,14 +71,6 @@ const createWindow = async () => {
     // await installExtensions();
   }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
     frame: false,
@@ -108,7 +94,7 @@ const createWindow = async () => {
     mainWindow.getPosition()[1] / 2 + 200,
   );
 
-  mainWindow.loadURL(resolveHtmlPath('index.html'));
+  mainWindow.loadURL(resolveHtmlPath('main.html'));
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -148,6 +134,8 @@ const createWindow = async () => {
   // 创建系统托盘图标
   createTray(mainWindow);
   mainWindow.setSkipTaskbar(true);
+  const api = new API();
+  api.listen(mainWindow);
   // mainWindow.setIgnoreMouseEvents(true);
 };
 

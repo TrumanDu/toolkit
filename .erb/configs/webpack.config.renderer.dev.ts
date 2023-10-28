@@ -45,16 +45,23 @@ const configuration: webpack.Configuration = {
 
   target: ['web', 'electron-renderer'],
 
-  entry: [
-    `webpack-dev-server/client?http://localhost:${port}/dist`,
-    'webpack/hot/only-dev-server',
-    path.join(webpackPaths.srcRendererPath, 'index.tsx'),
-  ],
+  entry: {
+    main: [
+      `webpack-dev-server/client?http://localhost:${port}/dist`,
+      'webpack/hot/only-dev-server',
+      path.join(webpackPaths.srcRendererPath, 'index.tsx'),
+    ],
+    plugin: [
+      `webpack-dev-server/client?http://localhost:${port}/dist`,
+      'webpack/hot/only-dev-server',
+      path.join(webpackPaths.srcPluginRenderPath, 'index.tsx'),
+    ],
+  },
 
   output: {
     path: webpackPaths.distRendererPath,
     publicPath: '/',
-    filename: 'renderer.dev.js',
+    filename: '[name].dev.js',
     library: {
       type: 'umd',
     },
@@ -150,7 +157,7 @@ const configuration: webpack.Configuration = {
     new ReactRefreshWebpackPlugin(),
 
     new HtmlWebpackPlugin({
-      filename: path.join('index.html'),
+      filename: path.join('main.html'),
       template: path.join(webpackPaths.srcRendererPath, 'index.ejs'),
       minify: {
         collapseWhitespace: true,
@@ -161,6 +168,21 @@ const configuration: webpack.Configuration = {
       env: process.env.NODE_ENV,
       isDevelopment: process.env.NODE_ENV !== 'production',
       nodeModules: webpackPaths.appNodeModulesPath,
+      chunks: ['main'],
+    }),
+    new HtmlWebpackPlugin({
+      filename: path.join('plugin.html'),
+      template: path.join(webpackPaths.srcPluginRenderPath, 'index.ejs'),
+      minify: {
+        collapseWhitespace: true,
+        removeAttributeQuotes: true,
+        removeComments: true,
+      },
+      isBrowser: false,
+      env: process.env.NODE_ENV,
+      isDevelopment: process.env.NODE_ENV !== 'production',
+      nodeModules: webpackPaths.appNodeModulesPath,
+      chunks: ['plugin'],
     }),
   ],
 
