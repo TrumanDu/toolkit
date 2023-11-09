@@ -31,6 +31,10 @@ class PluginManager {
         const pluginObj = JSON.parse(str);
         pluginObj.logoPath = path.join(pluginPath, pluginObj.logo);
         pluginObj.pluginPath = pluginPath;
+        if (pluginObj.preload) {
+          pluginObj.preloadPath = path.join(pluginPath, pluginObj.preload);
+        }
+
         pluginList.push(pluginObj);
       }
     });
@@ -55,6 +59,7 @@ class PluginManager {
       webPreferences: {
         webSecurity: false,
         backgroundThrottling: false,
+        preload: pluginObj.preload ? pluginObj.preloadPath : '',
         contextIsolation: false,
         webviewTag: true,
         devTools: true,
