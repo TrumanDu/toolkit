@@ -1,0 +1,16 @@
+{
+  "name": "JSON-handle",
+  "pluginName": "JSON-handle",
+  "version": "0.6.1",
+  "description": "JSON-handle格式化工具",
+  "keywords": [
+    "json",
+    "JSON-handle",
+    "格式化工具"
+  ],
+  "entry": "JSON-handle.html",
+  "logo": "./logo.ico",
+  "pluginType": "ui",
+  "author": "",
+  "homepage": ""
+}

@@ -22,25 +22,22 @@ const electronHandler = {
     once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
+    ipcSendSync(type: any, data: any) {
+      const returnValue = ipcRenderer.sendSync('trigger', {
+        type,
+        data,
+      });
+      if (returnValue instanceof Error) throw returnValue;
+      return returnValue;
+    },
+    ipcSend(type: any, data: any) {
+      ipcRenderer.send('trigger', {
+        type,
+        data,
+      });
+    },
   },
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
-
-const ipcSendSync = (type: any, data: any) => {
-  const returnValue = ipcRenderer.sendSync('trigger', {
-    type,
-    data,
-  });
-  if (returnValue instanceof Error) throw returnValue;
-  return returnValue;
-};
-
-const ipcSend = (type: any, data: any) => {
-  ipcRenderer.send('trigger', {
-    type,
-    data,
-  });
-};
-
 export type ElectronHandler = typeof electronHandler;

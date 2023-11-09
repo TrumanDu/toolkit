@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable class-methods-use-this */
 // @ts-nocheck
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, shell } from 'electron';
+import path from 'path';
 import { resolveHtmlPath, getAssetPath } from './util';
+import PluginManager from './plugin';
+
+const fs = require('fs');
 
 class API {
+  private pluginManager = new PluginManager();
+
   public listen(mainWindow: BrowserWindow) {
     ipcMain.on('trigger', async (event, arg) => {
       const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
@@ -21,37 +27,13 @@ class API {
     window.show();
   }
 
-  public openPlugin(arg: any, window: BrowserWindow) {
-    const pluginWin = new BrowserWindow({
-      height: 600,
-      minHeight: 600,
-      width: 1024,
-      title: `Plugin demo${arg.name}`,
-      show: false,
-      icon: getAssetPath('icon.png'),
-      autoHideMenuBar: true,
-      enableLargerThanScreen: true,
-      webPreferences: {
-        webSecurity: false,
-        backgroundThrottling: false,
-        contextIsolation: false,
-        webviewTag: true,
-        devTools: true,
-        nodeIntegration: true,
-        navigateOnDragDrop: true,
-        spellcheck: false,
-      },
-    });
-    pluginWin.setPosition(
-      pluginWin.getPosition()[0],
-      pluginWin.getPosition()[1],
-    );
+  public listPlugins() {
+    return this.pluginManager.allPlugins;
+  }
 
-    pluginWin.loadURL(resolveHtmlPath('plugin.html'));
-    pluginWin.once('ready-to-show', async () => {
-      pluginWin.webContents.executeJavaScript(`console.log(111)`);
-      pluginWin.show();
-    });
+  public openPlugin(arg: any, window: BrowserWindow) {
+    this.hideMainWindow(arg, window);
+    this.pluginManager.openPlugin(arg.data);
   }
 }
 

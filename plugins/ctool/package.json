@@ -1,0 +1,15 @@
+{
+  "name": "ctool",
+  "pluginName": "ctool 程序开发常用工具",
+  "version": "2.3.0",
+  "description": "ctool 程序开发常用工具",
+  "keywords": [
+    "ctool",
+    "程序开发常用工具"
+  ],
+  "entry": "index.html",
+  "logo": "./favicon.ico",
+  "pluginType": "ui",
+  "author": "baiy",
+  "homepage": "https://github.com/baiy/Ctool"
+}

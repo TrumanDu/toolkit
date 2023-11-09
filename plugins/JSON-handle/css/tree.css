@@ -1,0 +1,38 @@
+
+
+.treeNav .ico {float:left;cursor:pointer;padding:0 0 0 2px;}
+.treeNav .row {padding:0 0 0 16px;line-height:24px;}
+
+.treeNav .elmSpan {white-space: nowrap;margin:0 0 0 1px;display:inline-block;border-radius:8px;}
+.treeNav .cur>.row .elmSpan {box-shadow: -1px 2px 3px rgba(50, 50, 50, 0.2);font-weight:bold;background-color:#577cff;}
+.treeNav .cur>.row .elmSpan * {color:#fff !important;}
+
+.treeNav .elmBlock {cursor:row-resize;background:url(treePic/line.png) repeat-y 0 0;background-size:16px 22px;}
+
+.treeNav .elmBox {cursor:pointer;border-radius:8px;padding-left:0;border-left:2px solid #fafaff;}
+.treeNav .row:hover .elmBox{font-weight:bold;border-color:#778cff;}
+.treeNav .elm {padding:3px 8px;white-space:nowrap;}
+
+.treeNav .elmList {padding:0 0 0 22px;}
+
+.treeNav .folder {background:url(treePic/line.png) repeat-y 0 0;background-size:16px 22px;}
+.treeNav .root.elmBlock>.row {background-image:url(treePic/folderRoot.png);background-size:16px 22px;}
+.treeNav .root.open.elmBlock>.row {background-image:url(treePic/openRoot.png);background-size:16px 22px;}
+
+.treeNav .elmBlock .row {background:none no-repeat 0 0;}
+.treeNav .folder>.row {background-image:url(treePic/folder.png);background-size:16px 22px;}
+
+.treeNav .elmList>li:last-child,
+.treeNav .root{background-image:none;}
+.treeNav .elmList>li.folder:last-child>.row {background-image:url(treePic/folderLast.png);background-size:16px 22px;}
+.treeNav .elmList>li.node:last-child>.row,
+.treeNav .empty.elmBlock>li:last-child>.row {background-image:url(treePic/nodeLast.png);background-size:16px 22px;}
+
+.treeNav .open>.row {background-image:url(treePic/open.png);background-size:16px 22px;}
+.treeNav .elmList>li.open:last-child>.row {background-image:url(treePic/openLast.png);background-size:16px 22px;}
+.treeNav .open.root>.row {background-image:url(treePic/open.png);background-size:16px 22px;}
+
+.treeNav .empty>.row {background-image:url(treePic/node.png);background-size:16px 22px;}
+.treeNav .elmList>li.node:last-child>.row {background-image:url(treePic/nodeLast.png);background-size:16px 22px;}
+
+.treeNav .node .row {margin:0;white-space:nowrap;background:url(treePic/node.png) no-repeat 0 0;background-size:16px 22px;cursor:default;}

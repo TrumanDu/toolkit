@@ -6,31 +6,26 @@ import './index.css';
 function Search() {
   const inputRef = useRef(null);
   const [result, setResult] = useState([]);
+  const [allPlugins, setAllPlugins] = useState([]);
   const [resultHide, setResultHide] = useState(true);
   useEffect(() => {
     inputRef.current.focus();
+    const plugins = window.electron.ipcRenderer.ipcSendSync('listPlugins');
+    setAllPlugins(plugins);
   }, []);
 
   const onChange = (e) => {
-    const { value } = e.target;
-    const resultList = [];
-    for (let i = 0; i < value.length; i += 1) {
-      resultList.push({
-        title: value.charAt(i),
-      });
-    }
+    let { value } = e.target;
+    value = value.toLowerCase();
+    const resultList = allPlugins.filter((plugin) =>
+      plugin.name.toLowerCase().startsWith(value),
+    );
     if (resultList.length > 0) {
       setResultHide(false);
     } else {
       setResultHide(true);
     }
     setResult(resultList);
-  };
-  const focusEvent = () => {
-    inputRef.current.focus();
-    window.electron.ipcRenderer.sendMessage('main-window', {
-      event: 'focusMainWindow',
-    });
   };
   return (
     <div>
@@ -52,31 +47,41 @@ function Search() {
         <Card id="result" style={{ width: 670, top: 15 }}>
           <List
             itemLayout="horizontal"
+            style={
+              result.length > 6
+                ? {
+                    height: 500,
+                    overflowY: 'scroll',
+                    marginLeft: 10,
+                    marginRight: 10,
+                  }
+                : { marginLeft: 10, marginRight: 10 }
+            }
             dataSource={result}
             renderItem={(item, index) => (
               <List.Item
                 tabIndex={index + 1}
                 onClick={() => {
-                  window.electron.ipcRenderer.sendMessage('trigger', {
-                    type: 'openPlugin',
-                    name: index,
-                  });
+                  window.electron.ipcRenderer.ipcSendSync(
+                    'openPlugin',
+                    item.name,
+                  );
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
-                    console.log(index);
+                    window.electron.ipcRenderer.ipcSendSync(
+                      'openPlugin',
+                      item.name,
+                    );
                   }
                 }}
               >
                 <List.Item.Meta
-                  avatar={
-                    <Avatar
-                      src={`https://xsgames.co/randomusers/avatar.php?g=pixel&key=${index}`}
-                    />
-                  }
-                  title={item.title}
-                  description="Ant Design, a design language for background applications, is refined by Ant UED Team"
+                  avatar={<Avatar src={item.logoPath} />}
+                  title={item.pluginName}
+                  description={item.description}
                 />
+                <div style={{ marginRight: 10 }}>{item.version}</div>
               </List.Item>
             )}
           />
