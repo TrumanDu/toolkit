@@ -17,8 +17,10 @@ function Search() {
   const onChange = (e) => {
     let { value } = e.target;
     value = value.toLowerCase();
-    const resultList = allPlugins.filter((plugin) =>
-      plugin.name.toLowerCase().startsWith(value),
+    const resultList = allPlugins.filter(
+      (plugin) =>
+        plugin.name.toLowerCase().startsWith(value) ||
+        plugin.name.toLowerCase().indexOf(value) > 0,
     );
     if (resultList.length > 0) {
       setResultHide(false);
