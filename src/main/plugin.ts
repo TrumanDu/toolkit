@@ -3,6 +3,7 @@ import path from 'path';
 import * as fs from 'fs';
 import { BrowserWindow, shell } from 'electron';
 import DB from './db';
+import { getAssetPath } from './util';
 
 class PluginManager {
   // 插件安装地址
@@ -29,7 +30,12 @@ class PluginManager {
       if (fs.existsSync(packagePath)) {
         const str = fs.readFileSync(packagePath, 'utf8');
         const pluginObj = JSON.parse(str);
-        pluginObj.logoPath = path.join(pluginPath, pluginObj.logo);
+        if (pluginObj.logo) {
+          pluginObj.logoPath = path.join(pluginPath, pluginObj.logo);
+        } else {
+          pluginObj.logoPath = getAssetPath('icon.png');
+        }
+
         pluginObj.pluginPath = pluginPath;
         if (pluginObj.preload) {
           pluginObj.preloadPath = path.join(pluginPath, pluginObj.preload);
