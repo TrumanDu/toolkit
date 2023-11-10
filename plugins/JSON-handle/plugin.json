@@ -11,6 +11,7 @@
   "entry": "JSON-handle.html",
   "logo": "./logo.ico",
   "pluginType": "ui",
+  "mode": "multi",
   "author": "",
   "homepage": ""
 }

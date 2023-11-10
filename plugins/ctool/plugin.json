@@ -10,6 +10,7 @@
   "entry": "index.html",
   "logo": "./favicon.ico",
   "pluginType": "ui",
+  "mode": "single",
   "author": "baiy",
   "homepage": "https://github.com/baiy/Ctool"
 }

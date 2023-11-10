@@ -1,10 +1,11 @@
 import { dialog, Menu, Tray, app, shell, BrowserWindow } from 'electron';
 import pkg from '../../package.json';
 import { getAssetPath } from './util';
+import API from './api';
 
 const isMac = process.platform === 'darwin';
 
-function createTray(window: BrowserWindow): Promise<Tray> {
+function createTray(window: BrowserWindow, api: API): Promise<Tray> {
   return new Promise((resolve) => {
     const iconPath = getAssetPath('icon.png');
     const appTray = new Tray(iconPath);
@@ -31,6 +32,12 @@ function createTray(window: BrowserWindow): Promise<Tray> {
           },
         },
         { type: 'separator' },
+        {
+          label: '        重载插件        ',
+          click() {
+            api.reloadPlugins();
+          },
+        },
         {
           label: '        帮助文档        ',
           click: () => {

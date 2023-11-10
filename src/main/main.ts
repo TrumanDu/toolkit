@@ -132,11 +132,11 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
-  // 创建系统托盘图标
-  createTray(mainWindow);
-  mainWindow.setSkipTaskbar(true);
   const api = new API();
   api.listen(mainWindow);
+  // 创建系统托盘图标
+  createTray(mainWindow, api);
+  mainWindow.setSkipTaskbar(true);
   // mainWindow.setIgnoreMouseEvents(true);
 };
 

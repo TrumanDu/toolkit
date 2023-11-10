@@ -63,11 +63,12 @@ function Search() {
             renderItem={(item, index) => (
               <List.Item
                 tabIndex={index + 1}
-                onClick={() => {
+                onClick={(event) => {
                   window.electron.ipcRenderer.ipcSendSync(
                     'openPlugin',
                     item.name,
                   );
+                  event.preventDefault();
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
@@ -75,6 +76,7 @@ function Search() {
                       'openPlugin',
                       item.name,
                     );
+                    event.preventDefault();
                   }
                 }}
               >

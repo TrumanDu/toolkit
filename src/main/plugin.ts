@@ -13,11 +13,11 @@ class PluginManager {
 
   public allPlugins: any[] = [];
 
-  public db: DB = new DB('plugin.db');
+  // public db: DB = new DB('plugin.db');
 
   constructor() {
     this.allPlugins = this.listPlugin();
-    this.db.init();
+    // this.db.init();
   }
 
   public listPlugin() {
@@ -25,7 +25,7 @@ class PluginManager {
     const pluginList: any[] = [];
     files.forEach((filename) => {
       const pluginPath = path.join(this.baseDir, filename);
-      const packagePath = path.join(pluginPath, 'package.json');
+      const packagePath = path.join(pluginPath, 'plugin.json');
       if (fs.existsSync(packagePath)) {
         const str = fs.readFileSync(packagePath, 'utf8');
         const pluginObj = JSON.parse(str);
@@ -41,11 +41,15 @@ class PluginManager {
     return pluginList;
   }
 
+  public reloadPlugins() {
+    this.allPlugins = this.listPlugin();
+  }
+
   public getPlugin(name: string) {
     return this.allPlugins.find((plugin) => name === plugin.name);
   }
 
-  public async openPlugin(name: string) {
+  public openPlugin(name: string, pluginViewPool: Map<string, BrowserWindow>) {
     const pluginObj = this.getPlugin(name);
     const pluginWin = new BrowserWindow({
       height: 600,
@@ -92,6 +96,13 @@ class PluginManager {
       pluginWin.webContents.executeJavaScript(`console.log('init plugin!')`);
       pluginWin.show();
     });
+    pluginWin.on('closed', async () => {
+      if (pluginViewPool) {
+        pluginViewPool.delete(name);
+      }
+    });
+
+    return pluginWin;
   }
 }
 
