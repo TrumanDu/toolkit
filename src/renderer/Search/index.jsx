@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState } from 'react';
 import { Input, List, Avatar, Card } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
@@ -8,6 +9,7 @@ function Search() {
   const [result, setResult] = useState([]);
   const [allPlugins, setAllPlugins] = useState([]);
   const [resultHide, setResultHide] = useState(true);
+  const [inputSearch, setInputSearch] = useState(null);
   useEffect(() => {
     inputRef.current.focus();
     const plugins = window.electron.ipcRenderer.ipcSendSync('listPlugins');
@@ -32,7 +34,14 @@ function Search() {
     } else {
       setResultHide(true);
     }
+    setInputSearch(e.target.value);
     setResult(resultList);
+  };
+
+  const clearInput = () => {
+    setResultHide(true);
+    setInputSearch('');
+    inputRef.current.focus();
   };
   return (
     <div>
@@ -41,6 +50,7 @@ function Search() {
         ref={inputRef}
         placeholder="Start typing..."
         size="large"
+        value={inputSearch}
         onChange={onChange}
         suffix={<SearchOutlined />}
         style={{
@@ -73,6 +83,7 @@ function Search() {
                     'openPlugin',
                     item.name,
                   );
+                  clearInput();
                   event.preventDefault();
                 }}
                 onKeyDown={(event) => {
@@ -81,6 +92,7 @@ function Search() {
                       'openPlugin',
                       item.name,
                     );
+                    clearInput();
                     event.preventDefault();
                   }
                 }}

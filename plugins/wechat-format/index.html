@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>微信公众号格式化编辑器</title>
+    <link rel="shortcut icon" href="favicon.png" />
+    <link rel="apple-touch-icon-precomposed" href="favicon.png" />
+    <link rel="stylesheet" href="assets/css/vue-eleui.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/element-ui/lib/theme-chalk/index.css"
+    />
+    <link rel="stylesheet" href="codemirror/codemirror.css" />
+    <link rel="stylesheet" href="codemirror/theme/base16-light.css" />
+    <link rel="stylesheet" href="codemirror/theme/duotone-light.css" />
+    <link rel="stylesheet" href="codemirror/theme/monokai.css" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body>
+    <div id="app" class="container">
+      <el-container>
+        <el-header class="top">
+          <div class="logo">{{ title }}</div>
+          <el-form size="mini" class="ctrl" :inline="true">
+            <el-form-item label="Editor Themes">
+              <el-select
+                v-model="currentEditorTheme"
+                size="mini"
+                placeholder="选择字体"
+                @change="editorThemeChanged"
+              >
+                <el-option
+                  v-for="editorTheme in editorThemes"
+                  :key="editorTheme.value"
+                  :label="editorTheme.label"
+                  :value="editorTheme.value"
+                >
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Fonts">
+              <el-select
+                v-model="currentFont"
+                size="mini"
+                placeholder="选择字体"
+                @change="fontChanged"
+              >
+                <el-option
+                  v-for="font in builtinFonts"
+                  :style="{fontFamily: font.value}"
+                  :key="font.value"
+                  :label="font.label"
+                  :value="font.value"
+                >
+                  <span style="float: left">{{ font.label }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px"
+                    >Abc</span
+                  >
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Font Size">
+              <el-select
+                v-model="currentSize"
+                size="mini"
+                placeholder="选择段落字体大小"
+                @change="sizeChanged"
+              >
+                <el-option
+                  v-for="size in sizeOption"
+                  :key="size.value"
+                  :label="size.label"
+                  :value="size.value"
+                >
+                  <span style="float: left">{{ size.label }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px"
+                    >{{ size.desc }}</span
+                  >
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="Themes">
+              <el-select
+                v-model="currentTheme"
+                size="mini"
+                placeholder="选择主题样式"
+                @change="themeChanged"
+              >
+                <el-option
+                  v-for="theme in themeOption"
+                  :key="theme.value"
+                  :label="theme.label"
+                  :value="theme.value"
+                >
+                  <span style="float: left">{{ theme.label }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px"
+                    >{{ theme.author }}</span
+                  >
+                </el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </el-header>
+        <el-main class="main-body">
+          <el-row :gutter="10" class="main-section">
+            <el-col :span="12">
+              <textarea
+                id="editor"
+                type="textarea"
+                placeholder="Your markdown here."
+                v-model="source"
+              >
+              </textarea>
+            </el-col>
+            <el-col :span="12" class="preview-wrapper">
+              <section>
+                <div class="hint">
+                  全选复制或<a href="#" @click="copy" class="copy-button"
+                    >点此复制</a
+                  >，然后在公众号编辑器粘贴
+                </div>
+                <div class="preview" contenteditable="true">
+                  <div id="output" v-html="output"></div>
+                </div>
+              </section>
+            </el-col>
+          </el-row>
+        </el-main>
+      </el-container>
+    </div>
+
+    <script src="assets/scripts/axios.min.js"></script>
+    <script src="assets/scripts/marked.min.js"></script>
+    <script src="assets/scripts/vue.js"></script>
+    <script src="assets/scripts/vue-eleui.js"></script>
+    <script src="assets/scripts/FuriganaMD.js"></script>
+
+    <script src="codemirror/codemirror.js"></script>
+    <script src="codemirror/mode/markdown/markdown.js"></script>
+
+    <script src="assets/scripts/themes/default.js"></script>
+    <script src="assets/scripts/themes/lupeng.js"></script>
+    <script src="assets/scripts/renderers/wx-renderer.js"></script>
+    <script src="assets/scripts/editor.js"></script>
+  </body>
+</html>

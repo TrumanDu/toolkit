@@ -1,0 +1,14 @@
+{
+  "name": "wechat-format",
+  "pluginName": "wechat-format",
+  "version": "1.5.9",
+  "description": "微信公众号排版工具",
+  "keywords": [
+    "wechat-format"
+  ],
+  "entry": "index.html",
+  "pluginType": "ui",
+  "mode": "multi",
+  "author": "",
+  "homepage": "https://github.com/doocs/md"
+}
