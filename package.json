@@ -85,6 +85,7 @@
     "antd": "^5.10.1",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
+    "electron-store": "^8.1.0",
     "electron-updater": "^6.1.4",
     "pouchdb": "^8.0.1",
     "react": "^18.2.0",

@@ -1,0 +1,16 @@
+{
+  "name": "excalidraw",
+  "pluginName": "excalidraw",
+  "logo": "favicon.ico",
+  "version": "0.16.1",
+  "description": "Excalidraw，一款超级好用的在线绘图工具，非常轻量，轻松绘制具有手绘风格的图形",
+  "keywords": [
+    "excalidraw",
+    "白板绘制工具"
+  ],
+  "entry": "index.html",
+  "pluginType": "ui",
+  "mode": "single",
+  "author": "TrumanDu",
+  "homepage": "https://github.com/excalidraw/excalidraw"
+}

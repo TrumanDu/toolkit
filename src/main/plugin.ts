@@ -2,8 +2,12 @@ import path from 'path';
 
 import * as fs from 'fs';
 import { BrowserWindow, shell } from 'electron';
-import DB from './db';
+import Store from 'electron-store';
+// import DB from './db';
 import { getAssetPath } from './util';
+
+const DEFAULT_WINDOW_WIDTH = 1200;
+const DEFAULT_WINDOW_HEIGHT = 770;
 
 class PluginManager {
   // 插件安装地址
@@ -14,11 +18,11 @@ class PluginManager {
 
   public allPlugins: any[] = [];
 
-  // public db: DB = new DB('plugin.db');
+  // 创建一个新的存储实例
+  public store = new Store();
 
   constructor() {
     this.allPlugins = this.listPlugin();
-    // this.db.init();
   }
 
   public listPlugin() {
@@ -57,10 +61,14 @@ class PluginManager {
 
   public openPlugin(name: string, pluginViewPool: Map<string, BrowserWindow>) {
     const pluginObj = this.getPlugin(name);
+    const storeId = `${name}-windowSize`;
+    const savedSize = this.store.get(storeId, {
+      width: DEFAULT_WINDOW_WIDTH,
+      height: DEFAULT_WINDOW_HEIGHT,
+    }) as { width: number; height: number };
     const pluginWin = new BrowserWindow({
-      height: 600,
-      minHeight: 600,
-      width: 1024,
+      height: savedSize.height,
+      width: savedSize.width,
       title: pluginObj.name,
       show: false,
       icon: pluginObj.logoPath,
@@ -72,9 +80,9 @@ class PluginManager {
         preload: pluginObj.preload ? pluginObj.preloadPath : '',
         contextIsolation: false,
         webviewTag: true,
-        devTools: true,
         nodeIntegration: true,
         navigateOnDragDrop: true,
+        experimentalFeatures: true,
         spellcheck: false,
       },
     });
@@ -82,21 +90,27 @@ class PluginManager {
     //   pluginWin.getPosition()[0],
     //   pluginWin.getPosition()[1],
     // );
-    // const pluginSave = await this.db.get(name);
-    // if (pluginSave) {
-    //   const { width, height } = pluginSave;
-    //   pluginWin.setSize(width, height);
-    // }
-    // pluginWin.on('resize', () => {
-    //   const { width, height } = pluginWin.getBounds();
-    //   this.db.put(name, { width, height });
-    // });
+    pluginWin.on('resize', () => {
+      const [width, height] = pluginWin?.getSize() || [
+        DEFAULT_WINDOW_WIDTH,
+        DEFAULT_WINDOW_HEIGHT,
+      ];
+
+      this.store.set(storeId, { width, height });
+    });
 
     // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
     pluginWin.loadURL(`file://${pluginObj.pluginPath}/${pluginObj.entry}`);
     pluginWin.webContents.setWindowOpenHandler((data: { url: string }) => {
       shell.openExternal(data.url);
       return { action: 'deny' };
+    });
+    pluginWin.webContents.on('will-navigate', (event, url) => {
+      // 判断链接是否为本地文件
+      if (!url.startsWith('file://')) {
+        event.preventDefault();
+        shell.openExternal(url); // 打开默认浏览器并跳转到该链接
+      }
     });
     pluginWin.once('ready-to-show', async () => {
       pluginWin.webContents.executeJavaScript(`console.log('init plugin!')`);
