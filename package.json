@@ -1,7 +1,7 @@
 {
   "name": "Toolkit",
   "version": "0.0.1",
-  "description": "A tookit for scalable desktop apps",
+  "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",
     "boilerplate",
