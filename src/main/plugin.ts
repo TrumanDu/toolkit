@@ -1,7 +1,7 @@
 import path from 'path';
 
 import * as fs from 'fs';
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
 // import DB from './db';
 import { getAssetPath } from './util';
@@ -66,6 +66,12 @@ class PluginManager {
       width: DEFAULT_WINDOW_WIDTH,
       height: DEFAULT_WINDOW_HEIGHT,
     }) as { width: number; height: number };
+    const ses = session.fromPartition(`<${name}>`);
+    const preloadSystemPath = app.isPackaged
+      ? path.join(__dirname, 'preload.js')
+      : path.join(__dirname, '../../.erb/dll/preload.js');
+    ses.setPreloads([preloadSystemPath]);
+
     const pluginWin = new BrowserWindow({
       height: savedSize.height,
       width: savedSize.width,
@@ -78,7 +84,7 @@ class PluginManager {
         webSecurity: false,
         backgroundThrottling: false,
         preload: pluginObj.preload ? pluginObj.preloadPath : '',
-        contextIsolation: false,
+        session: ses,
         webviewTag: true,
         nodeIntegration: true,
         navigateOnDragDrop: true,
@@ -98,9 +104,13 @@ class PluginManager {
 
       this.store.set(storeId, { width, height });
     });
+    if (pluginObj.entry && pluginObj.entry.startsWith('http')) {
+      pluginWin.loadURL(pluginObj.entry);
+    } else {
+      // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
+      pluginWin.loadURL(`file://${pluginObj.pluginPath}/${pluginObj.entry}`);
+    }
 
-    // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
-    pluginWin.loadURL(`file://${pluginObj.pluginPath}/${pluginObj.entry}`);
     pluginWin.webContents.setWindowOpenHandler((data: { url: string }) => {
       shell.openExternal(data.url);
       return { action: 'deny' };

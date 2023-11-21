@@ -1,0 +1,16 @@
+{
+  "name": "carbon",
+  "pluginName": "carbon",
+  "logo": "favicon.ico",
+  "version": "0.0.1",
+  "description": "美化代码截图工具",
+  "keywords": [
+    "carbon"
+  ],
+  "entry": "https://carbon.now.sh/",
+  "pluginType": "ui",
+  "preload": "preload.js",
+  "mode": "multi",
+  "author": "",
+  "homepage": "https://carbon.now.sh/"
+}
