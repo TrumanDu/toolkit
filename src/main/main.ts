@@ -12,13 +12,15 @@ import path from 'path';
 import { app, BrowserWindow, globalShortcut, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import { resolveHtmlPath, getAssetPath } from './util';
+import * as fs from 'fs';
+import { resolveHtmlPath, getAssetPath, getPluginDir } from './util';
 import createTray from './tray';
 import API from './api';
+import MenuBuilder from './menu';
 
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
-
+app.setAppUserModelId('top.trumandu.Toolkit');
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -51,9 +53,11 @@ if (process.env.NODE_ENV === 'production') {
 
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-
 if (isDebug) {
   require('electron-debug')();
+}
+if (!fs.existsSync(getPluginDir())) {
+  fs.mkdirSync(getPluginDir());
 }
 
 const installExtensions = async () => {
@@ -87,6 +91,7 @@ const createWindow = async () => {
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: true,
       webSecurity: false,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')

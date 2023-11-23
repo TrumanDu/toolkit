@@ -20,3 +20,9 @@ export function resolveHtmlPath(htmlFileName: string) {
 export function getAssetPath(...paths: string[]): string {
   return path.join(RESOURCES_PATH, ...paths);
 }
+
+export function getPluginDir(): string {
+  return app.isPackaged
+    ? path.join(path.dirname(app.getPath('exe')), 'plugins')
+    : path.join(app.getAppPath(), 'plugins');
+}

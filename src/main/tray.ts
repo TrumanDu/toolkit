@@ -35,7 +35,15 @@ function createTray(window: BrowserWindow, api: API): Promise<Tray> {
         {
           label: '        重载插件        ',
           click() {
-            api.reloadPlugins();
+            try {
+              api.reloadPlugins();
+              api.notification(
+                'Toolkit Notification',
+                'Reload plugins success!',
+              );
+            } catch (error) {
+              api.notification('Toolkit Notification', 'Reload plugins fail!');
+            }
           },
         },
         {

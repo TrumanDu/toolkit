@@ -24,7 +24,7 @@ function Search() {
         plugin.name.toLowerCase().startsWith(value) ||
         plugin.name.toLowerCase().indexOf(value) > 0,
     );
-    if (value === ':all') {
+    if (value === ':all' || value.startsWith(':')) {
       resultList = allPlugins;
     } else if (value.trim().length === 0) {
       resultList = [];

@@ -4,17 +4,14 @@ import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
 // import DB from './db';
-import { getAssetPath } from './util';
+import { getAssetPath, getPluginDir } from './util';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
 
 class PluginManager {
   // 插件安装地址
-  public baseDir: string = path.join(
-    path.resolve(__dirname, '../..'),
-    'plugins',
-  );
+  public baseDir: string = getPluginDir();
 
   public allPlugins: any[] = [];
 
@@ -82,8 +79,9 @@ class PluginManager {
       enableLargerThanScreen: true,
       webPreferences: {
         webSecurity: false,
+        contextIsolation: true,
         backgroundThrottling: false,
-        preload: pluginObj.preload ? pluginObj.preloadPath : '',
+        preload: pluginObj.preload ? pluginObj.preloadPath : null,
         session: ses,
         webviewTag: true,
         nodeIntegration: true,

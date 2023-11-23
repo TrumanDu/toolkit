@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable class-methods-use-this */
 // @ts-nocheck
-import { ipcMain, BrowserWindow, shell } from 'electron';
-import path from 'path';
-import { resolveHtmlPath, getAssetPath } from './util';
+import { ipcMain, BrowserWindow, Notification } from 'electron';
 import PluginManager from './plugin';
-
-const fs = require('fs');
 
 class API {
   private pluginManager = new PluginManager();
@@ -55,6 +51,14 @@ class API {
     } else {
       this.pluginManager.openPlugin(arg.data, this.pluginViewPool);
     }
+  }
+
+  public notification(title: string, body: string) {
+    const notification = new Notification({
+      title,
+      body,
+    });
+    notification.show();
   }
 }
 
