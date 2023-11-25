@@ -1,3 +1,11 @@
+/* eslint-disable @typescript-eslint/no-shadow */
+/* eslint-disable no-console */
+/* eslint-disable react/jsx-no-useless-fragment */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-unused-expressions */
+/* eslint-disable no-sequences */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-undef */
 /* eslint-disable eqeqeq */
 /* eslint-disable no-sparse-arrays */
 /* eslint-disable jsx-a11y/mouse-events-have-key-events */
@@ -7,7 +15,7 @@
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { createRoot } from 'react-dom/client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import {
   DeleteOutlined,
   CloudDownloadOutlined,
@@ -25,6 +33,9 @@ import {
   Col,
   Avatar,
   Popconfirm,
+  TabsProps,
+  Tabs,
+  Spin,
 } from 'antd';
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
@@ -38,10 +49,16 @@ function Dashboard() {
   const [inputSearch, setInputSearch] = useState('');
   const [result, setResult] = useState([]);
   const [allPlugins, setAllPlugins] = useState([]);
-  const [storePlugins, setStorePlugins] = useState([]);
+  const [storePlugins, setStorePlugins] = useState({});
   const [selectKey, setSelectKey] = useState(1);
+  const [installing, setInstalling] = useState(new Map());
+  const [newInstall, setNewInstall] = useState(new Map());
 
   const refreshResult = (plugins: any[]) => {
+    if (plugins.length == 0) {
+      setResult([]);
+      return;
+    }
     const value = inputSearch.toLocaleLowerCase();
     let resultList = plugins.filter(
       (plugin) =>
@@ -71,14 +88,26 @@ function Dashboard() {
   const refreshStorePlugins = () => {
     console.log('refresh store plugin');
     const plugins = window.electron.ipcRenderer.ipcSendSync(
-      'listPlugins',
+      'getStoreAppList',
       null,
     );
-    let resultList = plugins.filter(
-      (plugin) => !allPlugins.some((install) => install.name === plugin.name),
-    );
-    setStorePlugins(resultList);
+    let resultList = [];
+    for (const attr in plugins) {
+      let array = plugins[attr];
+      array = array.map((obj: any) => {
+        return {
+          ...obj,
+          category: attr,
+          installed: allPlugins.some(
+            (install: ToolkitPlugin) => install.name === obj.name,
+          ),
+        };
+      });
+      resultList = resultList.concat(array);
+    }
+    setStorePlugins(plugins);
     refreshResult(resultList);
+    setNewInstall(new Map());
   };
 
   const removePlugin = (name: string) => {
@@ -104,12 +133,86 @@ function Dashboard() {
       console.log(item.key);
     }
   };
+  const generatorStoreApp = (result: []) => {
+    return result.map((plugin: ToolkitPlugin) => {
+      return (
+        <Col md={8} lg={4} key={plugin.name}>
+          <Card
+            key={plugin.name}
+            title={plugin.pluginName}
+            hoverable={hoverable}
+            extra={
+              plugin.installed || newInstall.has(plugin.name)
+                ? []
+                : [
+                    <Spin
+                      spinning={
+                        !!(
+                          installing.has(plugin.name) &&
+                          installing.get(plugin.name)
+                        )
+                      }
+                    >
+                      <CloudDownloadOutlined
+                        onClick={() => {
+                          const map = new Map(installing.entries());
+                          map.set(plugin.name, true);
+                          setInstalling(map);
+                        }}
+                        key="upgrade"
+                        style={{ color: 'green' }}
+                      />
+                    </Spin>,
+                  ]
+            }
+          >
+            <div>
+              <Meta
+                avatar={<Avatar src={plugin.logo} />}
+                description={`Version: ${plugin.version}`}
+              />
+              <br />
+              <div style={{ height: 80 }}>{plugin.description}</div>
+            </div>
+          </Card>
+        </Col>
+      );
+    });
+  };
+
+  const items: TabsProps['items'] = [
+    {
+      key: 'all',
+      label: 'ALL',
+      children: <Row gutter={[24, 16]}>{generatorStoreApp(result)}</Row>,
+    },
+  ];
+
+  if (storePlugins) {
+    for (const category in storePlugins) {
+      let array = storePlugins[category];
+      (array = array.map((obj: any) => {
+        return {
+          ...obj,
+          category,
+          installed: allPlugins.some(
+            (install: ToolkitPlugin) => install.name === obj.name,
+          ),
+        };
+      })),
+        items.push({
+          key: category,
+          label: category,
+          children: <Row gutter={[24, 16]}>{generatorStoreApp(array)}</Row>,
+        });
+    }
+  }
 
   const onChange = (e: { target: { value: any } }) => {
     let { value } = e.target;
     value = value.toLowerCase();
     let resultList = allPlugins.filter(
-      (plugin) =>
+      (plugin: ToolkitPlugin) =>
         plugin.name.toLowerCase().startsWith(value) ||
         plugin.name.toLowerCase().indexOf(value) > 0,
     );
@@ -181,12 +284,13 @@ function Dashboard() {
             background: colorBgContainer,
           }}
         >
-          <Row gutter={[24, 16]}>
+          <Row gutter={[24, 16]} hidden={selectKey == 1 && result.length > 0}>
             {selectKey == 1 && result.length > 0 ? (
-              result.map((plugin) => {
+              result.map((plugin: ToolkitPlugin) => {
                 return (
                   <Col md={8} lg={4} key={plugin.name}>
                     <Card
+                      key={plugin.name}
                       title={plugin.pluginName}
                       hoverable={hoverable}
                       actions={[
@@ -231,43 +335,16 @@ function Dashboard() {
             ) : (
               <Col />
             )}
-
-            {selectKey == 2 && result.length > 0 ? (
-              result.map((plugin) => {
-                return (
-                  <Col md={8} lg={4} key={plugin.name}>
-                    <Card
-                      title={plugin.pluginName}
-                      hoverable={hoverable}
-                      actions={[
-                        <Popconfirm
-                          title="Install the plugin"
-                          description="Are you sure to install this plugin?"
-                          onConfirm={() => {}}
-                          onCancel={() => {}}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <CloudDownloadOutlined key="upgrade" />
-                        </Popconfirm>,
-                      ]}
-                    >
-                      <div>
-                        <Meta
-                          avatar={<Avatar src={plugin.logoPath} />}
-                          description={`Version: ${plugin.version}`}
-                        />
-                        <br />
-                        <div style={{ height: 80 }}>{plugin.description}</div>
-                      </div>
-                    </Card>
-                  </Col>
-                );
-              })
-            ) : (
-              <Col />
-            )}
           </Row>
+          {selectKey == 2 && storePlugins ? (
+            <Tabs
+              defaultActiveKey="all"
+              items={items}
+              style={{ width: '100%', paddingLeft: 10 }}
+            />
+          ) : (
+            <></>
+          )}
         </Content>
         <Footer style={{ textAlign: 'center' }}>
           Toolkit ©2023 Created by{' '}

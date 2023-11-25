@@ -1,10 +1,11 @@
+/* eslint-disable class-methods-use-this */
 import path from 'path';
 
 import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
 // import DB from './db';
-import { deleteFolder, getAssetPath, getPluginDir } from './util';
+import { deleteFolder, getAppDir, getAssetPath, getPluginDir } from './util';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
@@ -140,6 +141,16 @@ class PluginManager {
     });
 
     return pluginWin;
+  }
+
+  public getStoreAppList() {
+    const toolkitAppPath = path.join(getAppDir(), 'toolkit-app.json');
+    if (fs.existsSync(toolkitAppPath)) {
+      const str = fs.readFileSync(toolkitAppPath, 'utf8');
+      const toolkitApp = JSON.parse(str);
+      return toolkitApp;
+    }
+    return {};
   }
 }
 

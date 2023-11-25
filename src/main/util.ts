@@ -28,6 +28,10 @@ export function getPluginDir(): string {
     : path.join(app.getAppPath(), 'plugins');
 }
 
+export function getAppDir(): string {
+  return app.isPackaged ? path.dirname(app.getPath('exe')) : app.getAppPath();
+}
+
 export function deleteFolder(filePath: string) {
   if (fs.existsSync(filePath)) {
     const files = fs.readdirSync(filePath);

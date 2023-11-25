@@ -28,6 +28,7 @@
     "Appstore",
     "hoverable",
     "minimizable",
+    "Popconfirm",
     "Sider"
   ]
 }

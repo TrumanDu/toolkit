@@ -72,6 +72,10 @@ class API {
     });
     notification.show();
   }
+
+  public getStoreAppList() {
+    return this.pluginManager.getStoreAppList();
+  }
 }
 
 export default API;
