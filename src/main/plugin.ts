@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
 // import DB from './db';
-import { getAssetPath, getPluginDir } from './util';
+import { deleteFolder, getAssetPath, getPluginDir } from './util';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
@@ -45,11 +45,20 @@ class PluginManager {
         pluginList.push(pluginObj);
       }
     });
+    this.allPlugins = pluginList;
     return pluginList;
   }
 
   public reloadPlugins() {
-    this.allPlugins = this.listPlugin();
+    this.listPlugin();
+  }
+
+  public removePlugin(name: string) {
+    const pluginPath = path.join(this.baseDir, name);
+    if (fs.existsSync(pluginPath)) {
+      deleteFolder(pluginPath);
+    }
+    this.reloadPlugins();
   }
 
   public getPlugin(name: string) {

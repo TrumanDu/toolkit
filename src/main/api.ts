@@ -9,8 +9,15 @@ class API {
 
   private pluginViewPool: Map<string, BrowserWindow> = new Map();
 
+  private dashboardWindow: BrowserWindow;
+
+  constructor(dashboardWindow: BrowserWindow) {
+    this.dashboardWindow = dashboardWindow;
+  }
+
   public listen(mainWindow: BrowserWindow) {
     ipcMain.on('trigger', async (event, arg) => {
+      console.log(arg);
       const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
       const data = await this[arg.type](arg, window, event);
       event.returnValue = data;
@@ -26,7 +33,7 @@ class API {
   }
 
   public listPlugins() {
-    return this.pluginManager.allPlugins;
+    return this.pluginManager.listPlugin();
   }
 
   public reloadPlugins() {
@@ -51,6 +58,11 @@ class API {
     } else {
       this.pluginManager.openPlugin(arg.data, this.pluginViewPool);
     }
+  }
+
+  public removePlugin(_arg: any, window: BrowserWindow) {
+    this.pluginManager.removePlugin(_arg.data);
+    return this.listPlugins();
   }
 
   public notification(title: string, body: string) {

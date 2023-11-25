@@ -2,6 +2,7 @@
 import { URL } from 'url';
 import path from 'path';
 import { app } from 'electron';
+import * as fs from 'fs';
 
 const RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
@@ -25,4 +26,20 @@ export function getPluginDir(): string {
   return app.isPackaged
     ? path.join(path.dirname(app.getPath('exe')), 'plugins')
     : path.join(app.getAppPath(), 'plugins');
+}
+
+export function deleteFolder(filePath: string) {
+  if (fs.existsSync(filePath)) {
+    const files = fs.readdirSync(filePath);
+    files.forEach((file) => {
+      const nextFilePath = `${filePath}/${file}`;
+      const states = fs.statSync(nextFilePath);
+      if (states.isDirectory()) {
+        deleteFolder(nextFilePath);
+      } else {
+        fs.unlinkSync(nextFilePath);
+      }
+    });
+    fs.rmdirSync(filePath);
+  }
 }

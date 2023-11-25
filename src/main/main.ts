@@ -72,6 +72,49 @@ const installExtensions = async () => {
     )
     .catch(console.log);
 };
+const createDashboardWindow = async () => {
+  const dashboardWindow = new BrowserWindow({
+    show: false,
+    center: true,
+    autoHideMenuBar: true,
+    icon: getAssetPath('icon.png'),
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: true,
+      webSecurity: false,
+      navigateOnDragDrop: true,
+      preload: app.isPackaged
+        ? path.join(__dirname, 'preload.js')
+        : path.join(__dirname, '../../.erb/dll/preload.js'),
+    },
+  });
+  dashboardWindow.setPosition(
+    dashboardWindow.getPosition()[0],
+    dashboardWindow.getPosition()[1] / 2 + 200,
+  );
+
+  dashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
+  dashboardWindow.on('close', (event) => {
+    dashboardWindow.hide();
+    event.preventDefault();
+  });
+  // 当窗口准备好时，最大化窗口
+  dashboardWindow.webContents.on('did-finish-load', () => {
+    dashboardWindow.maximize();
+  });
+  dashboardWindow.webContents.setWindowOpenHandler((data: { url: string }) => {
+    shell.openExternal(data.url);
+    return { action: 'deny' };
+  });
+  dashboardWindow.webContents.on('will-navigate', (event, url) => {
+    // 判断链接是否为本地文件
+    if (!url.startsWith('file://')) {
+      event.preventDefault();
+      shell.openExternal(url); // 打开默认浏览器并跳转到该链接
+    }
+  });
+  return dashboardWindow;
+};
 
 const createWindow = async () => {
   if (isDebug) {
@@ -109,11 +152,11 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
-    } else {
-      mainWindow.show();
-    }
+    // if (process.env.START_MINIMIZED) {
+    //   mainWindow.minimize();
+    // } else {
+    //   mainWindow.show();
+    // }
   });
   // 当窗口完成加载后，自动获得焦点
   mainWindow.webContents.on('did-finish-load', () => {
@@ -140,10 +183,11 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
-  const api = new API();
+  const dashboard = await createDashboardWindow();
+  const api = new API(dashboard);
   api.listen(mainWindow);
   // 创建系统托盘图标
-  createTray(mainWindow, api);
+  createTray(mainWindow, dashboard, api);
   mainWindow.setSkipTaskbar(true);
   // mainWindow.setIgnoreMouseEvents(true);
 };

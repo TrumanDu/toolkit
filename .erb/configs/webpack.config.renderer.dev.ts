@@ -51,10 +51,10 @@ const configuration: webpack.Configuration = {
       'webpack/hot/only-dev-server',
       path.join(webpackPaths.srcRendererPath, 'index.tsx'),
     ],
-    plugin: [
+    dashboard: [
       `webpack-dev-server/client?http://localhost:${port}/dist`,
       'webpack/hot/only-dev-server',
-      path.join(webpackPaths.srcPluginRenderPath, 'index.tsx'),
+      path.join(webpackPaths.srcDashboardRenderPath, 'index.tsx'),
     ],
   },
 
@@ -171,8 +171,8 @@ const configuration: webpack.Configuration = {
       chunks: ['main'],
     }),
     new HtmlWebpackPlugin({
-      filename: path.join('plugin.html'),
-      template: path.join(webpackPaths.srcPluginRenderPath, 'index.ejs'),
+      filename: path.join('dashboard.html'),
+      template: path.join(webpackPaths.srcDashboardRenderPath, 'index.ejs'),
       minify: {
         collapseWhitespace: true,
         removeAttributeQuotes: true,
@@ -182,7 +182,7 @@ const configuration: webpack.Configuration = {
       env: process.env.NODE_ENV,
       isDevelopment: process.env.NODE_ENV !== 'production',
       nodeModules: webpackPaths.appNodeModulesPath,
-      chunks: ['plugin'],
+      chunks: ['dashboard'],
     }),
   ],
 

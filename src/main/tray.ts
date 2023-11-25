@@ -5,7 +5,11 @@ import API from './api';
 
 const isMac = process.platform === 'darwin';
 
-function createTray(window: BrowserWindow, api: API): Promise<Tray> {
+function createTray(
+  window: BrowserWindow,
+  dashboard: BrowserWindow,
+  api: API,
+): Promise<Tray> {
   return new Promise((resolve) => {
     const iconPath = getAssetPath('icon.png');
     const appTray = new Tray(iconPath);
@@ -22,7 +26,7 @@ function createTray(window: BrowserWindow, api: API): Promise<Tray> {
           type: 'normal',
           label: '        显示        ',
           click() {
-            window.show();
+            dashboard.show();
           },
         },
         {
@@ -70,14 +74,16 @@ function createTray(window: BrowserWindow, api: API): Promise<Tray> {
               label: '        退出        ',
             }
           : {
-              role: 'quit',
               label: '        退出        ',
+              click() {
+                app.exit();
+              },
             },
         {
           label: '        重启        ',
           click() {
             app.relaunch();
-            app.quit();
+            app.exit();
           },
         },
 
@@ -101,12 +107,12 @@ function createTray(window: BrowserWindow, api: API): Promise<Tray> {
     // appTray.setContextMenu(createContextMenu());
 
     appTray.on('click', () => {
-      if (window) {
-        if (window.isVisible()) {
-          window.hide();
+      if (dashboard) {
+        if (dashboard.isVisible()) {
+          dashboard.hide();
         } else {
-          window.show();
-          window.focus();
+          dashboard.show();
+          dashboard.focus();
         }
       }
     });
