@@ -13,7 +13,7 @@ import { app, BrowserWindow, globalShortcut, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import * as fs from 'fs';
-import { resolveHtmlPath, getAssetPath, getPluginDir } from './util';
+import { resolveHtmlPath, getAssetPath, getPluginDir, getAppDir } from './util';
 import createTray from './tray';
 import API from './api';
 import MenuBuilder from './menu';
@@ -59,6 +59,10 @@ if (isDebug) {
 if (!fs.existsSync(getPluginDir())) {
   fs.mkdirSync(getPluginDir());
 }
+const configPath = path.join(getAppDir(), 'config');
+if (!fs.existsSync(configPath)) {
+  fs.mkdirSync(configPath);
+}
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -77,6 +81,8 @@ const createDashboardWindow = async () => {
     show: false,
     center: true,
     autoHideMenuBar: true,
+    width: 1560,
+    height: 900,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,

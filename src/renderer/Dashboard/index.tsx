@@ -36,6 +36,7 @@ import {
   TabsProps,
   Tabs,
   Spin,
+  notification,
 } from 'antd';
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
@@ -53,6 +54,32 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [newInstall, setNewInstall] = useState(new Map());
+
+  const onListenerMainProcess = () => {
+    window.electron.ipcRenderer.on('dashboard-reply', (response) => {
+      if (response.operator === 'installPlugin') {
+        const { result } = response;
+        const { name } = response.result;
+        const newMap = new Map(installing.entries());
+        if (result == undefined || result.code < 0) {
+          notification.error({
+            message: 'Install plugin failed!',
+            description: result == undefined ? '' : result.data,
+          });
+          newMap.set(name, false);
+        } else {
+          notification.success({
+            message: 'Install plugin succeed!',
+          });
+          newMap.delete(name);
+          const newInstallMap = new Map(newInstall.entries());
+          newInstallMap.set(name, true);
+          setNewInstall(newInstallMap);
+        }
+        setInstalling(newMap);
+      }
+    });
+  };
 
   const refreshResult = (plugins: any[]) => {
     if (plugins.length == 0) {
@@ -121,6 +148,7 @@ function Dashboard() {
   };
   useEffect(() => {
     refreshPlugins();
+    onListenerMainProcess();
   }, []);
 
   const onMenu = (item: any) => {
@@ -132,6 +160,13 @@ function Dashboard() {
     } else {
       console.log(item.key);
     }
+  };
+
+  const onInstallPlugin = async (name: string) => {
+    const map = new Map(installing.entries());
+    map.set(name, true);
+    setInstalling(map);
+    window.electron.ipcRenderer.ipcSend('installPlugin', name);
   };
   const generatorStoreApp = (result: []) => {
     return result.map((plugin: ToolkitPlugin) => {
@@ -147,17 +182,19 @@ function Dashboard() {
                 : [
                     <Spin
                       spinning={
-                        !!(
-                          installing.has(plugin.name) &&
-                          installing.get(plugin.name)
-                        )
+                        installing.has(plugin.name) &&
+                        installing.get(plugin.name)
                       }
                     >
                       <CloudDownloadOutlined
-                        onClick={() => {
-                          const map = new Map(installing.entries());
-                          map.set(plugin.name, true);
-                          setInstalling(map);
+                        onClick={(event) => {
+                          try {
+                            onInstallPlugin(plugin.name);
+                          } catch (error) {
+                            console.error(error);
+                          } finally {
+                            event.preventDefault();
+                          }
                         }}
                         key="upgrade"
                         style={{ color: 'green' }}
@@ -312,11 +349,16 @@ function Dashboard() {
                     >
                       <div
                         onClick={(event) => {
-                          window.electron.ipcRenderer.ipcSendSync(
-                            'openPlugin',
-                            plugin.name,
-                          );
-                          event.preventDefault();
+                          try {
+                            window.electron.ipcRenderer.ipcSendSync(
+                              'openPlugin',
+                              plugin.name,
+                            );
+                          } catch (error) {
+                            console.error(error);
+                          } finally {
+                            event.preventDefault();
+                          }
                         }}
                         onMouseOver={() => setHoverable(true)}
                         onMouseOut={() => setHoverable(false)}

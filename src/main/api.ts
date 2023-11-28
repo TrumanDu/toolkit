@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable class-methods-use-this */
 // @ts-nocheck
@@ -18,9 +19,13 @@ class API {
   public listen(mainWindow: BrowserWindow) {
     ipcMain.on('trigger', async (event, arg) => {
       console.log(arg);
-      const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
-      const data = await this[arg.type](arg, window, event);
-      event.returnValue = data;
+      try {
+        const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
+        const data = await this[arg.type](arg, window, event);
+        event.returnValue = data;
+      } catch (error) {
+        console.error(error);
+      }
     });
   }
 
@@ -75,6 +80,18 @@ class API {
 
   public getStoreAppList() {
     return this.pluginManager.getStoreAppList();
+  }
+
+  public async installPlugin(arg: any, _window: BrowserWindow, event) {
+    const data = await this.pluginManager.installPlugin(arg.data);
+    const response = {
+      operator: 'installPlugin',
+      result: {
+        ...data,
+        name: arg.data,
+      },
+    };
+    event.sender.send('dashboard-reply', response);
   }
 }
 

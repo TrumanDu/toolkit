@@ -8,8 +8,8 @@
       "logo": "./favicon.ico"
     },
     {
-      "name": "demo22",
-      "pluginName": "demo22",
+      "name": "toolkit-carbon",
+      "pluginName": "toolkit-carbon",
       "version": "2.3.0",
       "description": "ctool 程序开发常用工具",
       "logo": "https://carbon.now.sh/favicon.ico"

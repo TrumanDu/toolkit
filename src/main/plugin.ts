@@ -1,9 +1,13 @@
+/* eslint-disable global-require */
+/* eslint-disable prefer-promise-reject-errors */
+/* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
 import path from 'path';
 
 import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
+
 // import DB from './db';
 import { deleteFolder, getAppDir, getAssetPath, getPluginDir } from './util';
 
@@ -13,6 +17,8 @@ const DEFAULT_WINDOW_HEIGHT = 770;
 class PluginManager {
   // 插件安装地址
   public baseDir: string = getPluginDir();
+
+  public configDir: string = path.join(getAppDir(), 'config');
 
   public allPlugins: any[] = [];
 
@@ -27,6 +33,7 @@ class PluginManager {
     const files = fs.readdirSync(this.baseDir);
     const pluginList: any[] = [];
     files.forEach((filename) => {
+      if (filename === 'cache') return;
       const pluginPath = path.join(this.baseDir, filename);
       const packagePath = path.join(pluginPath, 'plugin.json');
       if (fs.existsSync(packagePath)) {
@@ -144,13 +151,45 @@ class PluginManager {
   }
 
   public getStoreAppList() {
-    const toolkitAppPath = path.join(getAppDir(), 'toolkit-app.json');
+    const toolkitAppPath = path.join(this.configDir, 'toolkit-app.json');
     if (fs.existsSync(toolkitAppPath)) {
       const str = fs.readFileSync(toolkitAppPath, 'utf8');
       const toolkitApp = JSON.parse(str);
       return toolkitApp;
     }
     return {};
+  }
+
+  public async installPlugin(name: string): Promise<string> {
+    return new Promise((resolve: any) => {
+      const module = `${name}@latest`;
+      const { exec } = require('node:child_process');
+      const cache = path.join(this.baseDir, 'cache');
+      exec(
+        `npm install --prefix ${cache} ${module}`,
+        (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            console.error(`exec error: ${error}`);
+            resolve({ code: -1, data: error });
+          }
+          console.error(`stderr: ${stderr}`);
+          try {
+            fs.renameSync(
+              path.join(cache, 'node_modules', name),
+              path.join(this.baseDir, name),
+            );
+            console.log('install plugin success!');
+            resolve({ code: 0 });
+          } catch (err) {
+            resolve({
+              code: -1,
+              data: 'copy plugin failed! maybe has already existed.',
+            });
+            console.error('install plugin failed:', err);
+          }
+        },
+      );
+    });
   }
 }
 
