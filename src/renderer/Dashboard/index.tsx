@@ -1,3 +1,4 @@
+/* eslint-disable radix */
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable no-console */
 /* eslint-disable react/jsx-no-useless-fragment */
@@ -152,7 +153,7 @@ function Dashboard() {
   }, []);
 
   const onMenu = (item: any) => {
-    setSelectKey(item.key);
+    setSelectKey(parseInt(item.key));
     if (item.key === '1') {
       refreshPlugins();
     } else if (item.key === '2') {
@@ -281,6 +282,7 @@ function Dashboard() {
             value={inputSearch}
             onChange={onChange}
             hidden={collapsed}
+            disabled={selectKey !== 1}
             tabIndex={0}
             placeholder="搜索你想要使用的软件名称"
             suffix={<SearchOutlined />}
