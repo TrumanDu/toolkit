@@ -47,3 +47,12 @@ export function deleteFolder(filePath: string) {
     fs.rmdirSync(filePath);
   }
 }
+
+export function readJsonObjFromFile(filePath: string) {
+  let json = null;
+  if (fs.existsSync(filePath)) {
+    const p = fs.readFileSync(filePath, 'utf8');
+    json = JSON.parse(p);
+  }
+  return json;
+}

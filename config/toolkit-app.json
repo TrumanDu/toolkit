@@ -3,7 +3,7 @@
     {
       "name": "toolkit-ctool",
       "pluginName": "ctool",
-      "version": "2.3.1",
+      "version": "2.3.2",
       "description": "ctool 程序开发常用工具",
       "logo": "https://toolkit.trumandu.top/logo/ctool.ico"
     }
@@ -13,7 +13,7 @@
     {
       "name": "toolkit-carbon",
       "pluginName": "carbon",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "description": "美化代码截图工具",
       "logo": "https://carbon.now.sh/favicon.ico"
     }

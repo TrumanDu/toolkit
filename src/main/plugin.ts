@@ -11,7 +11,13 @@ import Store from 'electron-store';
 
 // import DB from './db';
 import axios from 'axios';
-import { deleteFolder, getAppDir, getAssetPath, getPluginDir } from './util';
+import {
+  deleteFolder,
+  getAppDir,
+  getAssetPath,
+  getPluginDir,
+  readJsonObjFromFile,
+} from './util';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
@@ -85,10 +91,15 @@ class PluginManager {
     files.forEach((filename) => {
       if (filename === 'cache') return;
       const pluginPath = path.join(this.baseDir, filename);
+      const packageJsonPath = path.join(pluginPath, 'package.json');
       const packagePath = path.join(pluginPath, 'plugin.json');
       if (fs.existsSync(packagePath)) {
-        const str = fs.readFileSync(packagePath, 'utf8');
-        const pluginObj = JSON.parse(str);
+        const packageObj = readJsonObjFromFile(packageJsonPath);
+        const pluginObj = readJsonObjFromFile(packagePath);
+        if (packageObj) {
+          pluginObj.name = packageObj.name;
+          pluginObj.version = packageObj.version;
+        }
         if (pluginObj.logo) {
           pluginObj.logoPath = path.join(pluginPath, pluginObj.logo);
         } else {

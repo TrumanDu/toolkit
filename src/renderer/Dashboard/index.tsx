@@ -191,7 +191,8 @@ function Dashboard() {
             title={plugin.pluginName}
             hoverable={hoverable}
             extra={
-              plugin.installed || newInstall.has(plugin.name)
+              (plugin.installed && plugin.version == plugin.installVersion) ||
+              newInstall.has(plugin.name)
                 ? []
                 : [
                     <Spin
@@ -213,10 +214,6 @@ function Dashboard() {
                         key="upgrade"
                         style={{
                           color: 'green',
-                          display:
-                            plugin.version == plugin.installVersion
-                              ? 'none'
-                              : '',
                         }}
                       />
                     </Spin>,
