@@ -4,6 +4,11 @@
 
 <br>
 
+## Screenshot
+
+![](./screen/screen-main.png)
+![](./screen/screen-dashboard.png)
+
 ## Install
 
 Clone the repo and install dependencies:

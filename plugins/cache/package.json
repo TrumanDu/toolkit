@@ -1,6 +1,9 @@
 {
   "dependencies": {
-    "toolkit-carbon": "^1.0.2",
-    "toolkit-ctool": "^2.3.0"
+    "toolkit-carbon": "^1.0.3",
+    "toolkit-ctool": "^2.3.2",
+    "toolkit-excalidraw": "^0.0.1",
+    "toolkit-json-handle": "^0.0.1",
+    "toolkit-wechat-format": "^0.0.1"
   }
 }
