@@ -31,12 +31,13 @@ class AppUpdater {
 
 let mainWindow: BrowserWindow | null = null;
 
-ipcMain.on('ipc-example', async (event, arg) => {
-  const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
-  console.log(msgTemplate(arg));
-  event.reply('ipc-example', msgTemplate('pong'));
-});
-
+if (!fs.existsSync(getPluginDir())) {
+  fs.mkdirSync(getPluginDir());
+}
+const configPath = path.join(getAppDir(), 'config');
+if (!fs.existsSync(configPath)) {
+  fs.mkdirSync(configPath);
+}
 ipcMain.on('main-window', async (event, arg) => {
   console.log(arg);
   if (arg && arg != null) {

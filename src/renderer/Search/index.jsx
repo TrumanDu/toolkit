@@ -52,6 +52,11 @@ function Search() {
         size="large"
         value={inputSearch}
         onChange={onChange}
+        onFocus={() => {
+          const plugins =
+            window.electron.ipcRenderer.ipcSendSync('listPlugins');
+          setAllPlugins(plugins);
+        }}
         suffix={<SearchOutlined />}
         style={{
           width: 670,

@@ -69,13 +69,6 @@ class PluginManager {
   }
 
   public init() {
-    if (!fs.existsSync(getPluginDir())) {
-      fs.mkdirSync(getPluginDir());
-    }
-    const configPath = path.join(getAppDir(), 'config');
-    if (!fs.existsSync(configPath)) {
-      fs.mkdirSync(configPath);
-    }
     this.syncAppStoreConfig();
     setInterval(
       () => {
