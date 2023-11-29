@@ -55,6 +55,7 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [newInstall, setNewInstall] = useState(new Map());
+  const [selectPluginName, setSelectPluginName] = useState('');
 
   const onListenerMainProcess = () => {
     window.electron.ipcRenderer.on('dashboard-reply', (response) => {
@@ -63,14 +64,16 @@ function Dashboard() {
         const { name } = response.result;
         const newMap = new Map(installing.entries());
         if (result == undefined || result.code < 0) {
+          console.error(result);
           notification.error({
-            message: 'Install plugin failed!',
-            description: result == undefined ? '' : result.data,
+            message: `Install ${name}  failed!`,
+            description: result == undefined ? '' : JSON.stringify(result.data),
           });
           newMap.set(name, false);
         } else {
           notification.success({
-            message: 'Install plugin succeed!',
+            message: `Install plugin succeed!`,
+            description: `plugin name:${name}`,
           });
           newMap.delete(name);
           const newInstallMap = new Map(newInstall.entries());
@@ -119,16 +122,26 @@ function Dashboard() {
       'getStoreAppList',
       null,
     );
-    let resultList = [];
+
+    const allPlugins = window.electron.ipcRenderer.ipcSendSync(
+      'listPlugins',
+      null,
+    );
+    const allPluginsMap = new Map();
+    for (const p of allPlugins) {
+      allPluginsMap.set(p.name, p);
+    }
+    let resultList: any[] = [];
     for (const attr in plugins) {
       let array = plugins[attr];
       array = array.map((obj: any) => {
         return {
           ...obj,
           category: attr,
-          installed: allPlugins.some(
-            (install: ToolkitPlugin) => install.name === obj.name,
-          ),
+          installed: allPluginsMap.has(obj.name),
+          installVersion: allPluginsMap.has(obj.name)
+            ? allPluginsMap.get(obj.name).version
+            : '',
         };
       });
       resultList = resultList.concat(array);
@@ -163,11 +176,11 @@ function Dashboard() {
     }
   };
 
-  const onInstallPlugin = async (name: string) => {
+  const onInstallPlugin = async (plugin: any) => {
     const map = new Map(installing.entries());
-    map.set(name, true);
+    map.set(plugin.name, true);
     setInstalling(map);
-    window.electron.ipcRenderer.ipcSend('installPlugin', name);
+    window.electron.ipcRenderer.ipcSend('installPlugin', plugin);
   };
   const generatorStoreApp = (result: []) => {
     return result.map((plugin: ToolkitPlugin) => {
@@ -190,7 +203,7 @@ function Dashboard() {
                       <CloudDownloadOutlined
                         onClick={(event) => {
                           try {
-                            onInstallPlugin(plugin.name);
+                            onInstallPlugin(plugin);
                           } catch (error) {
                             console.error(error);
                           } finally {
@@ -198,7 +211,13 @@ function Dashboard() {
                           }
                         }}
                         key="upgrade"
-                        style={{ color: 'green' }}
+                        style={{
+                          color: 'green',
+                          display:
+                            plugin.version == plugin.installVersion
+                              ? 'none'
+                              : '',
+                        }}
                       />
                     </Spin>,
                   ]
@@ -227,15 +246,20 @@ function Dashboard() {
   ];
 
   if (storePlugins) {
+    const allPluginsMap = new Map();
+    for (const p of allPlugins) {
+      allPluginsMap.set(p.name, p);
+    }
     for (const category in storePlugins) {
       let array = storePlugins[category];
       (array = array.map((obj: any) => {
         return {
           ...obj,
           category,
-          installed: allPlugins.some(
-            (install: ToolkitPlugin) => install.name === obj.name,
-          ),
+          installed: allPluginsMap.has(obj.name),
+          installVersion: allPluginsMap.has(obj.name)
+            ? allPluginsMap.get(obj.name).version
+            : '',
         };
       })),
         items.push({
@@ -332,7 +356,9 @@ function Dashboard() {
                       key={plugin.name}
                       title={plugin.pluginName}
                       hoverable={hoverable}
-                      actions={[
+                      onMouseOver={() => setSelectPluginName(plugin.name)}
+                      onMouseOut={() => setSelectPluginName('')}
+                      extra={
                         <Popconfirm
                           title="Delete the plugin"
                           description="Are you sure to delete this plugin?"
@@ -343,11 +369,14 @@ function Dashboard() {
                         >
                           <DeleteOutlined
                             key="remove"
-                            // style={{ color: 'red' }}
+                            style={{
+                              color: 'red',
+                              display:
+                                selectPluginName == plugin.name ? '' : 'none',
+                            }}
                           />
-                        </Popconfirm>,
-                        <CloudDownloadOutlined key="upgrade" />,
-                      ]}
+                        </Popconfirm>
+                      }
                     >
                       <div
                         onClick={(event) => {

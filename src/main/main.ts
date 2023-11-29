@@ -56,13 +56,6 @@ const isDebug =
 if (isDebug) {
   require('electron-debug')();
 }
-if (!fs.existsSync(getPluginDir())) {
-  fs.mkdirSync(getPluginDir());
-}
-const configPath = path.join(getAppDir(), 'config');
-if (!fs.existsSync(configPath)) {
-  fs.mkdirSync(configPath);
-}
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -105,9 +98,9 @@ const createDashboardWindow = async () => {
     event.preventDefault();
   });
   // 当窗口准备好时，最大化窗口
-  dashboardWindow.webContents.on('did-finish-load', () => {
-    dashboardWindow.maximize();
-  });
+  // dashboardWindow.webContents.on('did-finish-load', () => {
+  //   dashboardWindow.maximize();
+  // });
   dashboardWindow.webContents.setWindowOpenHandler((data: { url: string }) => {
     shell.openExternal(data.url);
     return { action: 'deny' };

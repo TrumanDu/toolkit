@@ -1,3 +1,4 @@
+/* eslint-disable promise/always-return */
 /* eslint-disable global-require */
 /* eslint-disable prefer-promise-reject-errors */
 /* eslint-disable no-console */
@@ -9,10 +10,12 @@ import { BrowserWindow, shell, session, app } from 'electron';
 import Store from 'electron-store';
 
 // import DB from './db';
+import axios from 'axios';
 import { deleteFolder, getAppDir, getAssetPath, getPluginDir } from './util';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
+const APP_STORE_URL = 'https://toolkit.trumandu.top/toolkit-app.json';
 
 class PluginManager {
   // 插件安装地址
@@ -27,6 +30,53 @@ class PluginManager {
 
   constructor() {
     this.allPlugins = this.listPlugin();
+    this.init();
+  }
+
+  private syncAppStoreConfig() {
+    const https = require('https');
+    axios
+      .get(APP_STORE_URL, {
+        httpsAgent: new https.Agent({
+          rejectUnauthorized: false,
+        }),
+      })
+      .then((response) => {
+        const toolkitAppPath = path.join(this.configDir, 'toolkit-app.json');
+        let localAppStore = '';
+        if (fs.existsSync(toolkitAppPath)) {
+          localAppStore = fs.readFileSync(toolkitAppPath, 'utf8');
+        }
+
+        if (JSON.stringify(response.data) !== localAppStore) {
+          fs.writeFileSync(
+            toolkitAppPath,
+            JSON.stringify(response.data),
+            'utf8',
+          );
+          console.log(`update toolkit-app.json!`);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+
+  public init() {
+    if (!fs.existsSync(getPluginDir())) {
+      fs.mkdirSync(getPluginDir());
+    }
+    const configPath = path.join(getAppDir(), 'config');
+    if (!fs.existsSync(configPath)) {
+      fs.mkdirSync(configPath);
+    }
+    this.syncAppStoreConfig();
+    setInterval(
+      () => {
+        this.syncAppStoreConfig();
+      },
+      1000 * 60 * 60 * 10,
+    );
   }
 
   public listPlugin() {
@@ -62,10 +112,16 @@ class PluginManager {
   }
 
   public removePlugin(name: string) {
-    const pluginPath = path.join(this.baseDir, name);
+    let pluginPath = path.join(this.baseDir, name);
     if (fs.existsSync(pluginPath)) {
       deleteFolder(pluginPath);
+    } else {
+      pluginPath = path.join(this.baseDir, `toolkit-${name}`);
+      if (fs.existsSync(pluginPath)) {
+        deleteFolder(pluginPath);
+      }
     }
+
     this.reloadPlugins();
   }
 
@@ -99,7 +155,6 @@ class PluginManager {
         contextIsolation: true,
         backgroundThrottling: false,
         preload: pluginObj.preload ? pluginObj.preloadPath : null,
-        session: ses,
         webviewTag: true,
         nodeIntegration: true,
         navigateOnDragDrop: true,
@@ -150,7 +205,7 @@ class PluginManager {
     return pluginWin;
   }
 
-  public getStoreAppList() {
+  public async getStoreAppList() {
     const toolkitAppPath = path.join(this.configDir, 'toolkit-app.json');
     if (fs.existsSync(toolkitAppPath)) {
       const str = fs.readFileSync(toolkitAppPath, 'utf8');
@@ -160,9 +215,10 @@ class PluginManager {
     return {};
   }
 
-  public async installPlugin(name: string): Promise<string> {
+  public async installPlugin(plugin: any): Promise<string> {
     return new Promise((resolve: any) => {
-      const module = `${name}@latest`;
+      const module = `${plugin.name}@${plugin.version}`;
+      const { name } = plugin;
       const { exec } = require('node:child_process');
       const cache = path.join(this.baseDir, 'cache');
       exec(
@@ -174,18 +230,22 @@ class PluginManager {
           }
           console.error(`stderr: ${stderr}`);
           try {
+            const destinationPath = path.join(this.baseDir, name);
+            if (fs.existsSync(destinationPath)) {
+              deleteFolder(destinationPath);
+            }
             fs.renameSync(
               path.join(cache, 'node_modules', name),
-              path.join(this.baseDir, name),
+              destinationPath,
             );
             console.log('install plugin success!');
             resolve({ code: 0 });
           } catch (err) {
+            console.error('install plugin failed:', err);
             resolve({
               code: -1,
               data: 'copy plugin failed! maybe has already existed.',
             });
-            console.error('install plugin failed:', err);
           }
         },
       );

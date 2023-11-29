@@ -11,4 +11,5 @@ interface ToolkitPlugin {
   author?: string;
   homepage?: string;
   keywords: string[];
+  installed?: boolean;
 }

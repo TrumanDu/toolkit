@@ -30,7 +30,7 @@ class API {
   }
 
   public hideMainWindow(_arg: any, window: BrowserWindow) {
-    window.hide();
+    window?.hide();
   }
 
   public showMainWindow(_arg: any, window: BrowserWindow) {
@@ -88,7 +88,7 @@ class API {
       operator: 'installPlugin',
       result: {
         ...data,
-        name: arg.data,
+        name: arg.data.name,
       },
     };
     event.sender.send('dashboard-reply', response);

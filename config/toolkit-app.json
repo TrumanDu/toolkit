@@ -1,52 +1,21 @@
 {
   "Dev": [
     {
-      "name": "ctool",
+      "name": "toolkit-ctool",
       "pluginName": "ctool",
-      "version": "2.3.0",
+      "version": "2.3.1",
       "description": "ctool 程序开发常用工具",
-      "logo": "./favicon.ico"
-    },
-    {
-      "name": "toolkit-carbon",
-      "pluginName": "toolkit-carbon",
-      "version": "2.3.0",
-      "description": "ctool 程序开发常用工具",
-      "logo": "https://carbon.now.sh/favicon.ico"
-    },
-    {
-      "name": "JSON-handle",
-      "pluginName": "JSON-handle",
-      "version": "0.6.1",
-      "description": "JSON-handle格式化工具",
-      "logo": "./logo.ico"
+      "logo": "https://toolkit.trumandu.top/logo/ctool.ico"
     }
   ],
-  "Editor": [
-    {
-      "name": "excalidraw",
-      "pluginName": "excalidraw",
-      "logo": "https://carbon.now.sh/favicon.ico",
-      "version": "0.16.1",
-      "description": "Excalidraw，一款超级好用的在线绘图工具，非常轻量，轻松绘制具有手绘风格的图形"
-    },
-    {
-      "name": "wechat-format",
-      "pluginName": "wechat-format",
-      "version": "1.5.9",
-      "description": "微信公众号排版工具",
-      "keywords": [
-        "wechat-format"
-      ]
-    }
-  ],
+  "Editor": [],
   "Other": [
     {
-      "name": "carbon",
+      "name": "toolkit-carbon",
       "pluginName": "carbon",
-      "logo": "favicon.ico",
-      "version": "0.0.1",
-      "description": "美化代码截图工具"
+      "version": "1.0.2",
+      "description": "美化代码截图工具",
+      "logo": "https://carbon.now.sh/favicon.ico"
     }
   ]
 }
