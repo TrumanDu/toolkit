@@ -95,9 +95,9 @@ const createDashboardWindow = async () => {
     event.preventDefault();
   });
   // 当窗口准备好时，最大化窗口
-  // dashboardWindow.webContents.on('did-finish-load', () => {
-  //   dashboardWindow.maximize();
-  // });
+  dashboardWindow.webContents.on('did-finish-load', () => {
+    dashboardWindow.show();
+  });
   dashboardWindow.webContents.setWindowOpenHandler((data: { url: string }) => {
     shell.openExternal(data.url);
     return { action: 'deny' };

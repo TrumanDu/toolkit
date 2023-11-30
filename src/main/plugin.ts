@@ -156,6 +156,7 @@ class PluginManager {
       webPreferences: {
         webSecurity: false,
         contextIsolation: true,
+        session: ses,
         backgroundThrottling: false,
         preload: pluginObj.preload ? pluginObj.preloadPath : null,
         webviewTag: true,
