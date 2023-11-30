@@ -116,14 +116,13 @@ class PluginManager {
   }
 
   public removePlugin(name: string) {
-    let pluginPath = path.join(this.baseDir, name);
-    if (fs.existsSync(pluginPath)) {
-      deleteFolder(pluginPath);
-    } else {
-      pluginPath = path.join(this.baseDir, `toolkit-${name}`);
+    try {
+      const pluginPath = path.join(this.baseDir, name);
       if (fs.existsSync(pluginPath)) {
         deleteFolder(pluginPath);
       }
+    } catch (error) {
+      console.log(error);
     }
 
     this.reloadPlugins();

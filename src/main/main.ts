@@ -88,10 +88,6 @@ const createDashboardWindow = async () => {
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
-  dashboardWindow.setPosition(
-    dashboardWindow.getPosition()[0],
-    dashboardWindow.getPosition()[1] / 2 + 200,
-  );
 
   dashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
   dashboardWindow.on('close', (event) => {

@@ -54,36 +54,7 @@ function Dashboard() {
   const [storePlugins, setStorePlugins] = useState({});
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
-  const [newInstall, setNewInstall] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
-
-  const onListenerMainProcess = () => {
-    window.electron.ipcRenderer.on('dashboard-reply', (response) => {
-      if (response.operator === 'installPlugin') {
-        const { result } = response;
-        const { name } = response.result;
-        const newMap = new Map(installing.entries());
-        if (result == undefined || result.code < 0) {
-          console.error(result);
-          notification.error({
-            message: `Install ${name}  failed!`,
-            description: result == undefined ? '' : JSON.stringify(result.data),
-          });
-          newMap.set(name, false);
-        } else {
-          notification.success({
-            message: `Install plugin succeed!`,
-            description: `plugin name:${name}`,
-          });
-          newMap.delete(name);
-          const newInstallMap = new Map(newInstall.entries());
-          newInstallMap.set(name, true);
-          setNewInstall(newInstallMap);
-        }
-        setInstalling(newMap);
-      }
-    });
-  };
 
   const refreshResult = (plugins: any[]) => {
     if (plugins.length == 0) {
@@ -104,16 +75,6 @@ function Dashboard() {
       resultList = plugins;
     }
     setResult(resultList);
-  };
-
-  const refreshPlugins = () => {
-    console.log('refresh plugin');
-    const plugins = window.electron.ipcRenderer.ipcSendSync(
-      'listPlugins',
-      null,
-    );
-    setAllPlugins(plugins);
-    refreshResult(plugins);
   };
 
   const refreshStorePlugins = () => {
@@ -148,7 +109,40 @@ function Dashboard() {
     }
     setStorePlugins(plugins);
     refreshResult(resultList);
-    setNewInstall(new Map());
+  };
+
+  const onListenerMainProcess = () => {
+    window.electron.ipcRenderer.on('dashboard-reply', (response) => {
+      if (response.operator === 'installPlugin') {
+        const { result } = response;
+        const { name } = response.result;
+        installing.delete(name);
+        if (result == undefined || result.code < 0) {
+          console.error(result);
+          notification.error({
+            message: `Install ${name}  failed!`,
+            description: result == undefined ? '' : JSON.stringify(result.data),
+          });
+          setInstalling(new Map(installing.entries()));
+        } else {
+          notification.success({
+            message: `Install plugin succeed!`,
+            description: `plugin name:${name}`,
+          });
+          refreshStorePlugins();
+        }
+      }
+    });
+  };
+
+  const refreshPlugins = () => {
+    console.log('refresh plugin');
+    const plugins = window.electron.ipcRenderer.ipcSendSync(
+      'listPlugins',
+      null,
+    );
+    setAllPlugins(plugins);
+    refreshResult(plugins);
   };
 
   const removePlugin = (name: string) => {
@@ -185,14 +179,13 @@ function Dashboard() {
   const generatorStoreApp = (result: []) => {
     return result.map((plugin: ToolkitPlugin) => {
       return (
-        <Col md={8} lg={4} key={plugin.name}>
+        <Col md={8} lg={4}>
           <Card
-            key={plugin.name}
+            key={`${plugin.name}-store`}
             title={plugin.pluginName}
             hoverable={hoverable}
             extra={
-              (plugin.installed && plugin.version == plugin.installVersion) ||
-              newInstall.has(plugin.name)
+              plugin.installed && plugin.version == plugin.installVersion
                 ? []
                 : [
                     <Spin
