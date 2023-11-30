@@ -7,6 +7,7 @@ import path from 'path';
 
 import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
+import log from 'electron-log';
 import Store from 'electron-store';
 
 // import DB from './db';
@@ -64,7 +65,7 @@ class PluginManager {
         }
       })
       .catch((error) => {
-        console.log(error);
+        log.error('syncAppStoreConfig has failed!', error);
       });
   }
 
@@ -122,7 +123,7 @@ class PluginManager {
         deleteFolder(pluginPath);
       }
     } catch (error) {
-      console.log(error);
+      log.error('removePlugin has failed!', error);
     }
 
     this.reloadPlugins();
@@ -229,7 +230,7 @@ class PluginManager {
         `npm install --prefix ${cache} ${module}`,
         (error: any, stdout: any, stderr: any) => {
           if (error) {
-            console.error(`exec error: ${error}`);
+            log.error('exec error::', error);
             resolve({ code: -1, data: error });
           }
           console.error(`stderr: ${stderr}`);
@@ -245,7 +246,7 @@ class PluginManager {
             console.log('install plugin success!');
             resolve({ code: 0 });
           } catch (err) {
-            console.error('install plugin failed:', err);
+            log.error('install plugin failed:', error);
             resolve({
               code: -1,
               data: 'copy plugin failed! maybe has already existed.',

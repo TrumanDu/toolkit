@@ -3,6 +3,7 @@
 /* eslint-disable class-methods-use-this */
 // @ts-nocheck
 import { ipcMain, BrowserWindow, Notification } from 'electron';
+import log from 'electron-log';
 import PluginManager from './plugin';
 
 class API {
@@ -24,7 +25,7 @@ class API {
         const data = await this[arg.type](arg, window, event);
         event.returnValue = data;
       } catch (error) {
-        console.error(error);
+        log.error(error);
       }
     });
   }

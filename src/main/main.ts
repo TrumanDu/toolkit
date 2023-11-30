@@ -21,6 +21,7 @@ import MenuBuilder from './menu';
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
+
 class AppUpdater {
   constructor() {
     log.transports.file.level = 'info';
@@ -218,7 +219,7 @@ app
     }
 
     // 检测快捷键注册状态
-    console.log(
+    log.info(
       'global shortcut register:',
       globalShortcut.isRegistered('CmdOrCtrl+Alt+A'),
     );
