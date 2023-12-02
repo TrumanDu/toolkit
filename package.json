@@ -219,9 +219,8 @@
       "./assets/**"
     ],
     "publish": {
-      "provider": "github",
-      "owner": "trumandu",
-      "repo": "tookit"
+      "provider": "generic",
+      "url": "https://toolkit.trumandu.top/auto-updates"
     }
   },
   "devEngines": {
