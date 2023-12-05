@@ -31,6 +31,7 @@ class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let dashboardWindow: BrowserWindow | null = null;
 
 if (!fs.existsSync(getPluginDir())) {
   fs.mkdirSync(getPluginDir());
@@ -180,11 +181,11 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
-  const dashboard = await createDashboardWindow();
-  const api = new API(dashboard);
+  dashboardWindow = await createDashboardWindow();
+  const api = new API(dashboardWindow);
   api.listen(mainWindow);
   // 创建系统托盘图标
-  createTray(mainWindow, dashboard, api);
+  createTray(mainWindow, dashboardWindow, api);
   mainWindow.setSkipTaskbar(true);
   // mainWindow.setIgnoreMouseEvents(true);
 };
@@ -205,23 +206,37 @@ app
   .whenReady()
   .then(() => {
     createWindow();
-    // 注册全局快捷键，例如：CmdOrWin+S
-    const ret = globalShortcut.register('CmdOrCtrl+Alt+A', () => {
-      // 在此处执行快捷键触发的操作
-      if (mainWindow) {
-        mainWindow.show();
-        mainWindow.focus();
-      }
-    });
+    // 注册全局快捷键
+    if (
+      !globalShortcut.register('CmdOrCtrl+Alt+A', () => {
+        // 在此处执行快捷键触发的操作
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      })
+    ) {
+      console.log('main shortcut register failed.');
+    }
 
-    if (!ret) {
-      console.log('全局快捷键注册失败');
+    if (
+      !globalShortcut.register('CmdOrCtrl+Alt+O', () => {
+        if (dashboardWindow) {
+          dashboardWindow.show();
+        }
+      })
+    ) {
+      console.log('dashboard shortcut register failed.');
     }
 
     // 检测快捷键注册状态
     log.info(
-      'global shortcut register:',
+      'main shortcut register:',
       globalShortcut.isRegistered('CmdOrCtrl+Alt+A'),
+    );
+    log.info(
+      'dashboard shortcut register:',
+      globalShortcut.isRegistered('CmdOrCtrl+Alt+O'),
     );
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
