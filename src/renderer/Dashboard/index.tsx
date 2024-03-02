@@ -112,7 +112,7 @@ function Dashboard() {
   };
 
   const onListenerMainProcess = () => {
-    window.electron.ipcRenderer.on('dashboard-reply', (response) => {
+    window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
       if (response.operator === 'installPlugin') {
         const { result } = response;
         const { name } = response.result;

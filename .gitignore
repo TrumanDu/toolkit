@@ -30,3 +30,4 @@ npm-debug.log.*
 *.db
 plugins/*
 package-lock.json
+data/*

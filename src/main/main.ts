@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint global-require: off, no-console: off, promise/always-return: off */
 
 /**
@@ -36,9 +37,15 @@ let dashboardWindow: BrowserWindow | null = null;
 if (!fs.existsSync(getPluginDir())) {
   fs.mkdirSync(getPluginDir());
 }
+
 const configPath = path.join(getAppDir(), 'config');
 if (!fs.existsSync(configPath)) {
   fs.mkdirSync(configPath);
+}
+
+const dataPath = path.join(getAppDir(), 'data');
+if (!fs.existsSync(dataPath)) {
+  fs.mkdirSync(dataPath);
 }
 ipcMain.on('main-window', async (event, arg) => {
   console.log(arg);
@@ -73,7 +80,7 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 const createDashboardWindow = async () => {
-  const dashboardWindow = new BrowserWindow({
+  const newDashboardWindow = new BrowserWindow({
     show: false,
     center: true,
     autoHideMenuBar: true,
@@ -91,27 +98,29 @@ const createDashboardWindow = async () => {
     },
   });
 
-  dashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
-  dashboardWindow.on('close', (event) => {
-    dashboardWindow.hide();
+  newDashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
+  newDashboardWindow.on('close', (event) => {
+    newDashboardWindow.hide();
     event.preventDefault();
   });
   // 当窗口准备好时，最大化窗口
-  dashboardWindow.webContents.on('did-finish-load', () => {
-    dashboardWindow.show();
+  newDashboardWindow.webContents.on('did-finish-load', () => {
+    newDashboardWindow.show();
   });
-  dashboardWindow.webContents.setWindowOpenHandler((data: { url: string }) => {
-    shell.openExternal(data.url);
-    return { action: 'deny' };
-  });
-  dashboardWindow.webContents.on('will-navigate', (event, url) => {
+  newDashboardWindow.webContents.setWindowOpenHandler(
+    (data: { url: string }) => {
+      shell.openExternal(data.url);
+      return { action: 'deny' };
+    },
+  );
+  newDashboardWindow.webContents.on('will-navigate', (event, url) => {
     // 判断链接是否为本地文件
     if (!url.startsWith('file://')) {
       event.preventDefault();
       shell.openExternal(url); // 打开默认浏览器并跳转到该链接
     }
   });
-  return dashboardWindow;
+  return newDashboardWindow;
 };
 
 const createWindow = async () => {
@@ -245,3 +254,11 @@ app
     });
   })
   .catch(console.log);
+
+app.on('ready', () => {
+  const appInstallDir = getAppDir();
+  // 将应用程序安装目录发送给渲染进程
+  ipcMain.on('get-app-install-dir', (event) => {
+    event.returnValue = appInstallDir;
+  });
+});

@@ -1,6 +1,6 @@
 import { dialog, Menu, Tray, app, shell, BrowserWindow } from 'electron';
 import pkg from '../../package.json';
-import { getAssetPath } from './util';
+import { getAppDir, getAssetPath } from './util';
 import API from './api';
 
 const isMac = process.platform === 'darwin';
@@ -14,10 +14,14 @@ function createTray(
     const iconPath = getAssetPath('icon.png');
     const appTray = new Tray(iconPath);
     const openSettings = () => {
-      window.webContents.executeJavaScript(
+      dashboard.webContents.executeJavaScript(
         `window.toolkit && window.toolkit.openMenu && window.toolkit.openMenu({ code: "settings" })`,
       );
-      window.show();
+    };
+
+    const openInstallDirectory = () => {
+      const directoryPath = getAppDir();
+      shell.openPath(directoryPath);
     };
 
     const createContextMenu = () =>
@@ -37,6 +41,12 @@ function createTray(
         },
         { type: 'separator' },
         {
+          label: '       打开安装目录       ',
+          click() {
+            openInstallDirectory();
+          },
+        },
+        {
           label: '        重载插件        ',
           click() {
             try {
@@ -50,6 +60,7 @@ function createTray(
             }
           },
         },
+        { type: 'separator' },
         {
           label: '        帮助文档        ',
           click: () => {
