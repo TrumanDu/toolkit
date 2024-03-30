@@ -183,7 +183,13 @@ class PluginManager {
       pluginWin.loadURL(pluginObj.entry);
     } else {
       // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
-      pluginWin.loadURL(`file://${pluginObj.pluginPath}/${pluginObj.entry}`);
+      pluginWin.loadURL(
+        require('url').format({
+          pathname: path.join(pluginObj.pluginPath, pluginObj.entry),
+          protocol: 'file:',
+          slashes: true,
+        }),
+      );
     }
 
     pluginWin.webContents.setWindowOpenHandler((data: { url: string }) => {
@@ -198,7 +204,7 @@ class PluginManager {
       }
     });
     pluginWin.once('ready-to-show', async () => {
-      pluginWin.webContents.executeJavaScript(`console.log('init plugin!')`);
+      pluginWin.webContents.executeJavaScript(`console.log('init plugin')`);
       pluginWin.show();
     });
     pluginWin.on('closed', async () => {
