@@ -16,13 +16,16 @@
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { createRoot } from 'react-dom/client';
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   DeleteOutlined,
   CloudDownloadOutlined,
   AppstoreOutlined,
   ShopOutlined,
   SearchOutlined,
+  SettingOutlined,
+  CheckOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import {
   Layout,
@@ -38,20 +41,26 @@ import {
   Tabs,
   Spin,
   notification,
+  Typography,
+  Space,
+  Select,
+  Switch,
+  Button,
 } from 'antd';
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
 
+const { Title } = Typography;
 const { Sider, Content } = Layout;
 
 function Dashboard() {
   const inputRef = useRef(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [hoverable, setHoverable] = useState(false);
   const [inputSearch, setInputSearch] = useState('');
   const [result, setResult] = useState([]);
   const [allPlugins, setAllPlugins] = useState([]);
-  const [storePlugins, setStorePlugins] = useState({});
+  const [storePlugins, setStorePlugins] = useState([]);
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
@@ -176,12 +185,11 @@ function Dashboard() {
     setInstalling(map);
     window.electron.ipcRenderer.ipcSend('installPlugin', plugin);
   };
-  const generatorStoreApp = (result: []) => {
+  const generatorStoreApp = (result: any) => {
     return result.map((plugin: ToolkitPlugin) => {
       return (
-        <Col md={8} lg={4}>
+        <Col md={8} lg={4} key={`${plugin.name}}`}>
           <Card
-            key={`${plugin.name}-store`}
             title={plugin.pluginName}
             hoverable={hoverable}
             extra={
@@ -189,6 +197,7 @@ function Dashboard() {
                 ? []
                 : [
                     <Spin
+                      key={`${plugin.name}-spin-${Math.random()}`}
                       spinning={
                         installing.has(plugin.name) &&
                         installing.get(plugin.name)
@@ -204,7 +213,6 @@ function Dashboard() {
                             event.preventDefault();
                           }
                         }}
-                        key="upgrade"
                         style={{
                           color: 'green',
                         }}
@@ -227,15 +235,95 @@ function Dashboard() {
     });
   };
 
-  const items: TabsProps['items'] = [
-    {
-      key: 'all',
-      label: 'ALL',
-      children: <Row gutter={[24, 16]}>{generatorStoreApp(result)}</Row>,
-    },
-  ];
+  const onChange = (e: { target: { value: any } }) => {
+    let { value } = e.target;
+    value = value.toLowerCase();
+    let resultList = allPlugins.filter(
+      (plugin: ToolkitPlugin) =>
+        plugin.name.toLowerCase().startsWith(value) ||
+        plugin.name.toLowerCase().indexOf(value) > 0,
+    );
+    if (
+      value === ':all' ||
+      value.startsWith(':') ||
+      value.trim().length === 0
+    ) {
+      resultList = allPlugins;
+    }
+    setInputSearch(e.target.value);
+    setResult(resultList);
+  };
 
-  if (storePlugins) {
+  const renderAppPage = (result: ToolkitPlugin[]) => {
+    return result.length > 0 ? (
+      result.map((plugin: ToolkitPlugin) => {
+        return (
+          <Col md={8} lg={4} key={plugin.name}>
+            <Card
+              title={plugin.pluginName}
+              hoverable={hoverable}
+              onMouseOver={() => setSelectPluginName(plugin.name)}
+              onMouseOut={() => setSelectPluginName('')}
+              extra={
+                <Popconfirm
+                  title="Delete the plugin"
+                  description="Are you sure to delete this plugin?"
+                  onConfirm={() => removePlugin(plugin.name)}
+                  onCancel={() => {}}
+                  okText="Yes"
+                  cancelText="No"
+                >
+                  <DeleteOutlined
+                    key="remove"
+                    style={{
+                      color: 'red',
+                      display: selectPluginName == plugin.name ? '' : 'none',
+                    }}
+                  />
+                </Popconfirm>
+              }
+            >
+              <div
+                onClick={(event) => {
+                  try {
+                    window.electron.ipcRenderer.ipcSendSync(
+                      'openPlugin',
+                      plugin.name,
+                    );
+                  } catch (error) {
+                    console.error(error);
+                  } finally {
+                    event.preventDefault();
+                  }
+                }}
+                onMouseOver={() => setHoverable(true)}
+                onMouseOut={() => setHoverable(false)}
+              >
+                <Meta
+                  avatar={<Avatar src={plugin.logoPath} />}
+                  description={`Version: ${plugin.version}`}
+                />
+                <br />
+                <div style={{ height: 80 }}>{plugin.description}</div>
+              </div>
+            </Card>
+          </Col>
+        );
+      })
+    ) : (
+      <Col />
+    );
+  };
+
+  const renderStorePage = (storePlugins: ToolkitPlugin[]) => {
+    const items: TabsProps['items'] = [
+      {
+        key: `all-tab${Math.random()}`,
+        label: 'ALL',
+        children: <Row gutter={[24, 16]}>{generatorStoreApp(result)}</Row>,
+      },
+    ];
+
     const allPluginsMap = new Map();
     for (const p of allPlugins) {
       allPluginsMap.set(p.name, p);
@@ -258,25 +346,90 @@ function Dashboard() {
           children: <Row gutter={[24, 16]}>{generatorStoreApp(array)}</Row>,
         });
     }
-  }
-
-  const onChange = (e: { target: { value: any } }) => {
-    let { value } = e.target;
-    value = value.toLowerCase();
-    let resultList = allPlugins.filter(
-      (plugin: ToolkitPlugin) =>
-        plugin.name.toLowerCase().startsWith(value) ||
-        plugin.name.toLowerCase().indexOf(value) > 0,
+    return storePlugins ? (
+      <Tabs
+        defaultActiveKey="all"
+        items={items}
+        style={{ width: '100%', paddingLeft: 10 }}
+      />
+    ) : (
+      <></>
     );
-    if (
-      value === ':all' ||
-      value.startsWith(':') ||
-      value.trim().length === 0
-    ) {
-      resultList = allPlugins;
-    }
-    setInputSearch(e.target.value);
-    setResult(resultList);
+  };
+
+  const renderSettingPage = () => {
+    return (
+      <>
+        <Title level={2}>设置</Title>
+        <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+          <Row>
+            <Col span={24}>
+              <div
+                style={{
+                  width: '100%',
+                  backgroundColor: '#fafafa',
+                  minHeight: '80px',
+                  padding: '12px',
+                  borderRadius: '0 0 8px 8px',
+                  border: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <p style={{ display: 'block' }}>
+                  <span style={{ fontSize: '14px' }}>界面语言</span>
+                  <br />
+                  <span style={{ fontSize: '12px' }}>
+                    修改界面语言后，需要重新启动应用程序
+                  </span>
+                </p>
+                <Select
+                  defaultValue="china"
+                  style={{ width: 120 }}
+                  options={[{ value: 'china', label: '中文' }]}
+                />
+              </div>
+            </Col>
+          </Row>
+          <Row>
+            <Col span={24}>
+              <div
+                style={{
+                  width: '100%',
+                  backgroundColor: '#fafafa',
+                  minHeight: '80px',
+                  padding: '12px',
+                  borderRadius: '0 0 8px 8px',
+                  border: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <p style={{ display: 'block' }}>
+                  <span style={{ fontSize: '14px' }}>插件排序</span>
+                  <br />
+                  <span style={{ fontSize: '12px' }}>
+                    是否根据用户点击插件数据来排列插件优先级顺序
+                  </span>
+                </p>
+                <div>
+                  <Button>重置</Button>
+                  &nbsp;&nbsp;&nbsp;
+                  <Switch
+                    defaultChecked
+                    style={{ width: 65, height: 26 }}
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                  />
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </Space>
+      </>
+    );
   };
 
   const {
@@ -285,7 +438,7 @@ function Dashboard() {
   return (
     <Layout style={{ minHeight: '97vh' }}>
       <Sider
-        collapsible
+        // collapsible
         collapsed={collapsed}
         onCollapse={(value) => setCollapsed(value)}
         theme="light"
@@ -308,25 +461,49 @@ function Dashboard() {
             }}
           />
         )}
-
-        <Menu
-          theme="light"
-          mode="inline"
-          defaultSelectedKeys={['1']}
-          onClick={onMenu}
-          items={[
-            {
-              key: '1',
-              icon: <AppstoreOutlined />,
-              label: '已安装工具',
-            },
-            {
-              key: '2',
-              icon: <ShopOutlined />,
-              label: 'APP市场',
-            },
-          ]}
-        />
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%',
+            marginTop: '-0.1px',
+            paddingTop: '-0.1px',
+          }}
+        >
+          <Menu
+            theme="light"
+            mode="inline"
+            selectedKeys={[`${selectKey}`]}
+            defaultSelectedKeys={['1']}
+            onClick={onMenu}
+            items={[
+              {
+                key: '1',
+                icon: <AppstoreOutlined />,
+                label: '已安装工具',
+              },
+              {
+                key: '2',
+                icon: <ShopOutlined />,
+                label: 'APP市场',
+              },
+            ]}
+          />
+          <Menu
+            theme="light"
+            mode="inline"
+            onClick={onMenu}
+            selectedKeys={[`${selectKey}`]}
+            items={[
+              {
+                key: '10',
+                icon: <SettingOutlined />,
+                label: '设置',
+              },
+            ]}
+          />
+        </div>
       </Sider>
       <Layout>
         <Content
@@ -338,76 +515,10 @@ function Dashboard() {
           }}
         >
           <Row gutter={[24, 16]} hidden={selectKey == 1 && result.length > 0}>
-            {selectKey == 1 && result.length > 0 ? (
-              result.map((plugin: ToolkitPlugin) => {
-                return (
-                  <Col md={8} lg={4} key={plugin.name}>
-                    <Card
-                      key={plugin.name}
-                      title={plugin.pluginName}
-                      hoverable={hoverable}
-                      onMouseOver={() => setSelectPluginName(plugin.name)}
-                      onMouseOut={() => setSelectPluginName('')}
-                      extra={
-                        <Popconfirm
-                          title="Delete the plugin"
-                          description="Are you sure to delete this plugin?"
-                          onConfirm={() => removePlugin(plugin.name)}
-                          onCancel={() => {}}
-                          okText="Yes"
-                          cancelText="No"
-                        >
-                          <DeleteOutlined
-                            key="remove"
-                            style={{
-                              color: 'red',
-                              display:
-                                selectPluginName == plugin.name ? '' : 'none',
-                            }}
-                          />
-                        </Popconfirm>
-                      }
-                    >
-                      <div
-                        onClick={(event) => {
-                          try {
-                            window.electron.ipcRenderer.ipcSendSync(
-                              'openPlugin',
-                              plugin.name,
-                            );
-                          } catch (error) {
-                            console.error(error);
-                          } finally {
-                            event.preventDefault();
-                          }
-                        }}
-                        onMouseOver={() => setHoverable(true)}
-                        onMouseOut={() => setHoverable(false)}
-                      >
-                        <Meta
-                          avatar={<Avatar src={plugin.logoPath} />}
-                          description={`Version: ${plugin.version}`}
-                        />
-                        <br />
-                        <div style={{ height: 80 }}>{plugin.description}</div>
-                      </div>
-                    </Card>
-                  </Col>
-                );
-              })
-            ) : (
-              <Col />
-            )}
+            {selectKey == 1 && renderAppPage(result)}
           </Row>
-          {selectKey == 2 && storePlugins ? (
-            <Tabs
-              defaultActiveKey="all"
-              items={items}
-              style={{ width: '100%', paddingLeft: 10 }}
-            />
-          ) : (
-            <></>
-          )}
+          {selectKey == 2 && renderStorePage(storePlugins)}
+          {selectKey == 10 && renderSettingPage()}
         </Content>
         <Footer style={{ textAlign: 'center' }}>
           Toolkit ©2023 Created by{' '}
