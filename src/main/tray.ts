@@ -13,11 +13,6 @@ function createTray(
   return new Promise((resolve) => {
     const iconPath = getAssetPath('icon.png');
     const appTray = new Tray(iconPath);
-    const openSettings = () => {
-      dashboard.webContents.executeJavaScript(
-        `window.toolkit && window.toolkit.openMenu && window.toolkit.openMenu({ code: "settings" })`,
-      );
-    };
 
     const openInstallDirectory = () => {
       const directoryPath = getAppDir();
@@ -31,12 +26,6 @@ function createTray(
           label: '        显示        ',
           click() {
             dashboard.show();
-          },
-        },
-        {
-          label: '        系统设置        ',
-          click() {
-            openSettings();
           },
         },
         { type: 'separator' },

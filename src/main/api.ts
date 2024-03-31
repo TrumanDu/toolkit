@@ -5,8 +5,11 @@
 import { ipcMain, BrowserWindow, Notification } from 'electron';
 import log from 'electron-log';
 import PluginManager from './plugin';
+import Setting from './setting';
 
 class API {
+  private setting = new Setting();
+
   private pluginManager = new PluginManager();
 
   private pluginViewPool: Map<string, BrowserWindow> = new Map();
@@ -93,6 +96,15 @@ class API {
       },
     };
     event.sender.send('dashboard-reply', response);
+  }
+
+  public getSetting() {
+    return this.setting.getSetting();
+  }
+
+  public saveSettingByKey(arg: any, window: BrowserWindow) {
+    const { data } = arg;
+    this.setting.updateByKey(data.key, data.value);
   }
 }
 

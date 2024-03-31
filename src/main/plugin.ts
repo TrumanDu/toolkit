@@ -19,16 +19,21 @@ import {
   getPluginDir,
   readJsonObjFromFile,
 } from './util';
+import Setting from './setting';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
 const APP_STORE_URL = 'https://toolkit.trumandu.top/toolkit-app.json';
 
 class PluginManager {
-  // 插件安装地址
-  public baseDir: string = getPluginDir();
+  private setting: Setting = new Setting();
 
-  public configDir: string = path.join(getAppDir(), 'config');
+  // 插件安装地址
+  private baseDir: string = getPluginDir();
+
+  private configDir: string = path.join(getAppDir(), 'config');
+
+  private sortSettingId = 'sortSettingId';
 
   public allPlugins: any[] = [];
 
@@ -108,6 +113,21 @@ class PluginManager {
         pluginList.push(pluginObj);
       }
     });
+
+    const { sort } = this.setting.getSetting();
+    if (sort) {
+      let sortData = this.store.get(this.sortSettingId, {});
+      sortData = new Map(Object.entries(sortData));
+      if (sortData.size > 0) {
+        pluginList.sort((a, b) => {
+          return (
+            (sortData.has(b.name) ? sortData.get(b.name) : 0) -
+            (sortData.has(a.name) ? sortData.get(a.name) : 0)
+          );
+        });
+      }
+    }
+
     this.allPlugins = pluginList;
     return pluginList;
   }
@@ -145,6 +165,20 @@ class PluginManager {
       ? path.join(__dirname, 'preload.js')
       : path.join(__dirname, '../../.erb/dll/preload.js');
     ses.setPreloads([preloadSystemPath]);
+
+    const { sort } = this.setting.getSetting();
+
+    if (sort) {
+      let sortData = this.store.get(this.sortSettingId, {});
+      sortData = new Map(Object.entries(sortData));
+      if (sortData.has(name)) {
+        const click = sortData.get(name);
+        sortData.set(name, click + 1);
+      } else {
+        sortData.set(name, 1);
+      }
+      this.store.set(this.sortSettingId, Object.fromEntries(sortData));
+    }
 
     const pluginWin = new BrowserWindow({
       height: savedSize.height,

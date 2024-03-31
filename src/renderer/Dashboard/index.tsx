@@ -64,6 +64,7 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
+  const [setting, SetSetting] = useState(null);
 
   const refreshResult = (plugins: any[]) => {
     if (plugins.length == 0) {
@@ -163,9 +164,14 @@ function Dashboard() {
     setAllPlugins(plugins);
     refreshResult(plugins);
   };
+  const getAppSetting = () => {
+    const setting = window.electron.ipcRenderer.ipcSendSync('getSetting', null);
+    SetSetting(setting);
+  };
   useEffect(() => {
     refreshPlugins();
     onListenerMainProcess();
+    getAppSetting();
   }, []);
 
   const onMenu = (item: any) => {
@@ -356,6 +362,19 @@ function Dashboard() {
       <></>
     );
   };
+  const onSettingSwitch = (checked: boolean) => {
+    const newSetting = setting;
+    newSetting.sort = checked;
+    SetSetting(newSetting);
+    try {
+      window.electron.ipcRenderer.ipcSend('saveSettingByKey', {
+        key: 'sort',
+        value: checked,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const renderSettingPage = () => {
     return (
@@ -418,7 +437,8 @@ function Dashboard() {
                   <Button>重置</Button>
                   &nbsp;&nbsp;&nbsp;
                   <Switch
-                    defaultChecked
+                    defaultChecked={setting.sort}
+                    onChange={onSettingSwitch}
                     style={{ width: 65, height: 26 }}
                     checkedChildren={<CheckOutlined />}
                     unCheckedChildren={<CloseOutlined />}

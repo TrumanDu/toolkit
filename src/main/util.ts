@@ -49,7 +49,7 @@ export function deleteFolder(filePath: string) {
 }
 
 export function readJsonObjFromFile(filePath: string) {
-  let json = null;
+  let json = {};
   if (fs.existsSync(filePath)) {
     const p = fs.readFileSync(filePath, 'utf8');
     json = JSON.parse(p);
