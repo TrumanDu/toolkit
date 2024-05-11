@@ -36,3 +36,7 @@ npm run package
 ## Docs
 
 See our [docs and guides here]()
+
+## Plugin App Repositories
+
+https://github.com/orgs/app-toolkit/repositories
