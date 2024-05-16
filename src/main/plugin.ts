@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 /* eslint-disable promise/always-return */
 /* eslint-disable global-require */
 /* eslint-disable prefer-promise-reject-errors */
@@ -217,7 +218,10 @@ class PluginManager {
 
       this.store.set(storeId, { width, height });
     });
-    if (pluginObj.webContainer) {
+    if (
+      pluginObj.hasOwnProperty('webContainer') &&
+      pluginObj.webContainer === true
+    ) {
       let url: string;
       if (!this.webContainers.has(name)) {
         const port = await this.container.listenPlugin(
