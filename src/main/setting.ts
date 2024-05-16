@@ -8,7 +8,7 @@ class Setting {
 
   private settingPath: string = path.join(this.configDir, 'setting.json');
 
-  private setting: object = { sort: true, language: 'china' };
+  private setting: any = { sort: true, language: 'china' };
 
   constructor() {
     this.init();
@@ -34,7 +34,7 @@ class Setting {
     return this.setting[key];
   }
 
-  public getSetting(): object {
+  public getSetting(): any {
     try {
       this.setting = readJsonObjFromFile(this.settingPath);
     } catch (error) {

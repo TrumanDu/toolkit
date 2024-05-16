@@ -9,9 +9,10 @@ import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import log from 'electron-log';
 import Store from 'electron-store';
+import axios from 'axios';
+import WebContainer from './webContainer';
 
 // import DB from './db';
-import axios from 'axios';
 import {
   deleteFolder,
   getAppDir,
@@ -33,9 +34,13 @@ class PluginManager {
 
   private configDir: string = path.join(getAppDir(), 'config');
 
+  private container: WebContainer = new WebContainer();
+
   private sortSettingId = 'sortSettingId';
 
   public allPlugins: any[] = [];
+
+  private webContainers: Map<string, string> = new Map();
 
   // 创建一个新的存储实例
   public store = new Store();
@@ -93,8 +98,8 @@ class PluginManager {
       const packageJsonPath = path.join(pluginPath, 'package.json');
       const packagePath = path.join(pluginPath, 'plugin.json');
       if (fs.existsSync(packagePath)) {
-        const packageObj = readJsonObjFromFile(packageJsonPath);
-        const pluginObj = readJsonObjFromFile(packagePath);
+        const packageObj: any = readJsonObjFromFile(packageJsonPath);
+        const pluginObj: any = readJsonObjFromFile(packagePath);
         if (packageObj) {
           pluginObj.name = packageObj.name;
           pluginObj.version = packageObj.version;
@@ -116,7 +121,7 @@ class PluginManager {
 
     const { sort } = this.setting.getSetting();
     if (sort) {
-      let sortData = this.store.get(this.sortSettingId, {});
+      let sortData: any = this.store.get(this.sortSettingId, {});
       sortData = new Map(Object.entries(sortData));
       if (sortData.size > 0) {
         pluginList.sort((a, b) => {
@@ -153,7 +158,10 @@ class PluginManager {
     return this.allPlugins.find((plugin) => name === plugin.name);
   }
 
-  public openPlugin(name: string, pluginViewPool: Map<string, BrowserWindow>) {
+  public async openPlugin(
+    name: string,
+    pluginViewPool: Map<string, BrowserWindow>,
+  ) {
     const pluginObj = this.getPlugin(name);
     const storeId = `${name}-windowSize`;
     const savedSize = this.store.get(storeId, {
@@ -169,7 +177,7 @@ class PluginManager {
     const { sort } = this.setting.getSetting();
 
     if (sort) {
-      let sortData = this.store.get(this.sortSettingId, {});
+      let sortData: any = this.store.get(this.sortSettingId, {});
       sortData = new Map(Object.entries(sortData));
       if (sortData.has(name)) {
         const click = sortData.get(name);
@@ -201,10 +209,6 @@ class PluginManager {
         spellcheck: false,
       },
     });
-    // pluginWin.setPosition(
-    //   pluginWin.getPosition()[0],
-    //   pluginWin.getPosition()[1],
-    // );
     pluginWin.on('resize', () => {
       const [width, height] = pluginWin?.getSize() || [
         DEFAULT_WINDOW_WIDTH,
@@ -213,7 +217,21 @@ class PluginManager {
 
       this.store.set(storeId, { width, height });
     });
-    if (pluginObj.entry && pluginObj.entry.startsWith('http')) {
+    if (pluginObj.webContainer) {
+      let url: string;
+      if (!this.webContainers.has(name)) {
+        const port = await this.container.listenPlugin(
+          name,
+          pluginObj.pluginPath,
+        );
+        url = path.join(`http://127.0.0.1:${port}`, pluginObj.entry);
+      } else {
+        url = this.webContainers.get(name) as string;
+      }
+
+      pluginWin.loadURL(url);
+      this.webContainers.set(name, url);
+    } else if (pluginObj.entry && pluginObj.entry.startsWith('http')) {
       pluginWin.loadURL(pluginObj.entry);
     } else {
       // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
@@ -242,6 +260,10 @@ class PluginManager {
       pluginWin.show();
     });
     pluginWin.on('closed', async () => {
+      if (pluginObj.webContainer) {
+        this.webContainers.delete(name);
+        this.container.closePlugin(name);
+      }
       if (pluginViewPool) {
         pluginViewPool.delete(name);
       }

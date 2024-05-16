@@ -88,6 +88,8 @@
     "electron-log": "^4.4.8",
     "electron-store": "^8.1.0",
     "electron-updater": "^6.1.4",
+    "express": "^4.19.2",
+    "portfinder": "^1.0.32",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.16.0"
