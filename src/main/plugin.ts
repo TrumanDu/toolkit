@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable promise/always-return */
 /* eslint-disable global-require */
@@ -169,7 +170,7 @@ class PluginManager {
       width: DEFAULT_WINDOW_WIDTH,
       height: DEFAULT_WINDOW_HEIGHT,
     }) as { width: number; height: number };
-    const ses = session.fromPartition(`<${name}>`);
+    const ses = session.fromPartition(`persist:<${name}>`);
     const preloadSystemPath = app.isPackaged
       ? path.join(__dirname, 'preload.js')
       : path.join(__dirname, '../../.erb/dll/preload.js');
