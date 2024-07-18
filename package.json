@@ -1,6 +1,6 @@
 {
   "name": "Toolkit",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",
@@ -204,7 +204,9 @@
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "verifyUpdateCodeSignature": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "linux": {
       "target": [

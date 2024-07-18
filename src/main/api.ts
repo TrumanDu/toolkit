@@ -6,18 +6,21 @@ import { ipcMain, BrowserWindow, Notification } from 'electron';
 import log from 'electron-log';
 import PluginManager from './plugin';
 import Setting from './setting';
+import InitCheck from './init_check';
 
 class API {
-  private setting = new Setting();
+  private setting: Setting;
 
-  private pluginManager = new PluginManager();
+  private pluginManager: PluginManager;
 
   private pluginViewPool: Map<string, BrowserWindow> = new Map();
 
   private dashboardWindow: BrowserWindow;
 
-  constructor(dashboardWindow: BrowserWindow) {
+  constructor(dashboardWindow: BrowserWindow, initCheck: InitCheck) {
     this.dashboardWindow = dashboardWindow;
+    this.setting = new Setting(initCheck);
+    this.pluginManager = new PluginManager(initCheck, this.setting);
   }
 
   public listen(mainWindow: BrowserWindow) {

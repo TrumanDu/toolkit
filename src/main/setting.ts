@@ -1,23 +1,19 @@
 /* eslint-disable no-console */
-import path from 'path';
 import * as fs from 'fs';
-import { getAppDir, readJsonObjFromFile } from './util';
+import { readJsonObjFromFile } from './util';
+import InitCheck from './init_check';
 
 class Setting {
-  private configDir: string = path.join(getAppDir(), 'config');
-
-  private settingPath: string = path.join(this.configDir, 'setting.json');
+  private settingPath: string;
 
   private setting: any = { sort: true, language: 'china' };
 
-  constructor() {
+  constructor(initCheck: InitCheck) {
+    this.settingPath = initCheck.settingPath;
     this.init();
   }
 
   private init() {
-    if (!fs.existsSync(this.settingPath)) {
-      fs.writeFileSync(this.settingPath, JSON.stringify(this.setting));
-    }
     try {
       this.setting = readJsonObjFromFile(this.settingPath);
     } catch (error) {

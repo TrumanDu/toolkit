@@ -10,86 +10,20 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import {
-  app,
-  BrowserWindow,
-  globalShortcut,
-  shell,
-  ipcMain,
-  dialog,
-} from 'electron';
-import { autoUpdater } from 'electron-updater';
+import { app, BrowserWindow, globalShortcut, shell, ipcMain } from 'electron';
+
 import log from 'electron-log';
-import * as fs from 'fs';
-import { resolveHtmlPath, getAssetPath, getPluginDir, getAppDir } from './util';
+import { resolveHtmlPath, getAssetPath, getAppDir } from './util';
 import createTray from './tray';
 import API from './api';
-import MenuBuilder from './menu';
-
+import AppUpdater from './app_updater';
+import InitCheck from './init_check';
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 
-class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-    autoUpdater.on('error', (error) => {
-      log.error(['检查更新失败', error]);
-    });
-    autoUpdater.on('update-available', (info) => {
-      log.info('检查到有更新，开始下载新版本');
-      log.info(info);
-    });
-    autoUpdater.on('update-not-available', () => {
-      log.info('没有可用更新');
-    });
-    // 在更新下载完成的时候触发。
-    autoUpdater.on('update-downloaded', (res) => {
-      log.info('下载完毕！提示安装更新');
-      log.info(res);
-      dialog
-        .showMessageBox({
-          title: '升级提示！',
-          message: '已为您下载最新应用，点击确定马上替换为最新版本！',
-        })
-        .then(() => {
-          log.info('退出应用，安装开始！');
-          // 重启应用并在下载后安装更新。 它只应在发出 update-downloaded 后方可被调用。
-          autoUpdater.quitAndInstall();
-        })
-        .catch((e) => {
-          log.error(e);
-        });
-    });
-  }
-}
-
 let mainWindow: BrowserWindow | null = null;
 let dashboardWindow: BrowserWindow | null = null;
-
-if (!fs.existsSync(getPluginDir())) {
-  fs.mkdirSync(getPluginDir());
-}
-
-const configPath = path.join(getAppDir(), 'config');
-if (!fs.existsSync(configPath)) {
-  fs.mkdirSync(configPath);
-}
-
-const dataPath = path.join(getAppDir(), 'data');
-if (!fs.existsSync(dataPath)) {
-  fs.mkdirSync(dataPath);
-}
-ipcMain.on('main-window', async (event, arg) => {
-  console.log(arg);
-  if (arg && arg != null) {
-    if (arg.event === 'focusEvent') {
-      // mainWindow?.focus();
-    }
-  }
-});
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -101,6 +35,7 @@ const isDebug =
 if (isDebug) {
   require('electron-debug')();
 }
+const initCheck = new InitCheck();
 
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
@@ -169,8 +104,6 @@ const createWindow = async () => {
     titleBarStyle: 'hidden',
     center: true,
     transparent: true,
-    // width: 1024,
-    // height: 728,
     width: 678,
     height: 680,
     icon: getAssetPath('icon.png'),
@@ -194,11 +127,6 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    // if (process.env.START_MINIMIZED) {
-    //   mainWindow.minimize();
-    // } else {
-    //   mainWindow.show();
-    // }
   });
   // 当窗口完成加载后，自动获得焦点
   mainWindow.webContents.on('did-finish-load', () => {
@@ -213,8 +141,6 @@ const createWindow = async () => {
     mainWindow = null;
   });
   mainWindow.setMenu(null);
-  // const menuBuilder = new MenuBuilder(mainWindow);
-  // menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
@@ -226,7 +152,7 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
   dashboardWindow = await createDashboardWindow();
-  const api = new API(dashboardWindow);
+  const api = new API(dashboardWindow, initCheck);
   api.listen(mainWindow);
   // 创建系统托盘图标
   createTray(mainWindow, dashboardWindow, api);

@@ -4,6 +4,8 @@ import path from 'path';
 import { app } from 'electron';
 import * as fs from 'fs';
 
+const os = require('os');
+
 const RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'assets')
   : path.join(__dirname, '../../assets');
@@ -20,12 +22,6 @@ export function resolveHtmlPath(htmlFileName: string) {
 
 export function getAssetPath(...paths: string[]): string {
   return path.join(RESOURCES_PATH, ...paths);
-}
-
-export function getPluginDir(): string {
-  return app.isPackaged
-    ? path.join(path.dirname(app.getPath('exe')), 'plugins')
-    : path.join(app.getAppPath(), 'plugins');
 }
 
 export function getAppDir(): string {

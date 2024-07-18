@@ -11,7 +11,6 @@ import * as fs from 'fs';
 import { BrowserWindow, shell, session, app } from 'electron';
 import log from 'electron-log';
 import Store from 'electron-store';
-import axios from 'axios';
 import WebContainer from './webContainer';
 
 // import DB from './db';
@@ -19,20 +18,19 @@ import {
   deleteFolder,
   getAppDir,
   getAssetPath,
-  getPluginDir,
   readJsonObjFromFile,
 } from './util';
 import Setting from './setting';
+import InitCheck from './init_check';
 
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
-const APP_STORE_URL = 'https://toolkit.trumandu.top/toolkit-app.json';
 
 class PluginManager {
-  private setting: Setting = new Setting();
+  private setting: Setting;
 
   // 插件安装地址
-  private baseDir: string = getPluginDir();
+  private baseDir: string;
 
   private configDir: string = path.join(getAppDir(), 'config');
 
@@ -47,48 +45,11 @@ class PluginManager {
   // 创建一个新的存储实例
   public store = new Store();
 
-  constructor() {
+  constructor(initCheck: InitCheck, setting: Setting) {
+    this.setting = setting;
+    this.baseDir = initCheck.pluginDir;
+    this.configDir = initCheck.configDir;
     this.allPlugins = this.listPlugin();
-    this.init();
-  }
-
-  private syncAppStoreConfig() {
-    const https = require('https');
-    axios
-      .get(APP_STORE_URL, {
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      })
-      .then((response) => {
-        const toolkitAppPath = path.join(this.configDir, 'toolkit-app.json');
-        let localAppStore = '';
-        if (fs.existsSync(toolkitAppPath)) {
-          localAppStore = fs.readFileSync(toolkitAppPath, 'utf8');
-        }
-
-        if (JSON.stringify(response.data) !== localAppStore) {
-          fs.writeFileSync(
-            toolkitAppPath,
-            JSON.stringify(response.data),
-            'utf8',
-          );
-          console.log(`update toolkit-app.json!`);
-        }
-      })
-      .catch((error) => {
-        log.error('syncAppStoreConfig has failed!', error);
-      });
-  }
-
-  public init() {
-    this.syncAppStoreConfig();
-    setInterval(
-      () => {
-        this.syncAppStoreConfig();
-      },
-      1000 * 60 * 60 * 10,
-    );
   }
 
   public listPlugin() {
