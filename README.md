@@ -33,6 +33,12 @@ To package apps for the local platform:
 npm run package
 ```
 
+分发mac 安装包
+
+```
+npm run package -- --mac
+```
+
 ## Docs
 
 See our [docs and guides here]()

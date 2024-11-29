@@ -3,15 +3,14 @@ import pkg from '../../package.json';
 import { getAppDir, getAssetPath } from './util';
 import API from './api';
 
-const isMac = process.platform === 'darwin';
-
 function createTray(
   window: BrowserWindow,
   dashboard: BrowserWindow,
   api: API,
 ): Promise<Tray> {
   return new Promise((resolve) => {
-    const iconPath = getAssetPath('icon.png');
+    const iconPath = getAssetPath('icons/16x16.png');
+
     const appTray = new Tray(iconPath);
 
     const openInstallDirectory = () => {
@@ -68,17 +67,12 @@ function createTray(
         },
 
         { type: 'separator' },
-        isMac
-          ? {
-              role: 'close',
-              label: '        退出        ',
-            }
-          : {
-              label: '        退出        ',
-              click() {
-                app.exit();
-              },
-            },
+        {
+          label: '        退出        ',
+          click() {
+            app.exit();
+          },
+        },
         {
           label: '        重启        ',
           click() {

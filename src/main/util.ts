@@ -25,7 +25,10 @@ export function getAssetPath(...paths: string[]): string {
 }
 
 export function getAppDir(): string {
-  return app.isPackaged ? path.dirname(app.getPath('exe')) : app.getAppPath();
+  const homedir = os.homedir();
+  // 用户配置信息，插件，data目录
+  const appDataPath = path.join(homedir, 'Toolkit');
+  return app.isPackaged ? appDataPath : app.getAppPath();
 }
 
 export function deleteFolder(filePath: string) {

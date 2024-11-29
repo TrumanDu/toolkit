@@ -10,7 +10,15 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, globalShortcut, shell, ipcMain } from 'electron';
+import fixPath from 'fix-path';
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  shell,
+  ipcMain,
+  Menu,
+} from 'electron';
 
 import log from 'electron-log';
 import { resolveHtmlPath, getAssetPath, getAppDir } from './util';
@@ -21,6 +29,8 @@ import InitCheck from './init_check';
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
+
+fixPath();
 
 let mainWindow: BrowserWindow | null = null;
 let dashboardWindow: BrowserWindow | null = null;
@@ -67,6 +77,11 @@ const createDashboardWindow = async () => {
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
   });
+
+  if (process.platform === 'darwin') {
+    app.dock.setIcon(getAssetPath('icon.png'));
+    app.dock.bounce();
+  }
 
   newDashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
   newDashboardWindow.on('close', (event) => {
@@ -215,6 +230,13 @@ app
     });
   })
   .catch(console.log);
+
+// 拦截系统默认的 Quit 行为
+app.on('before-quit', (event) => {
+  event.preventDefault(); // 阻止默认退出
+  // 强制退出
+  app.exit();
+});
 
 app.on('ready', () => {
   const appInstallDir = getAppDir();

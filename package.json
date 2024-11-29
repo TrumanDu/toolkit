@@ -1,6 +1,6 @@
 {
   "name": "Toolkit",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",
@@ -86,15 +86,16 @@
     }
   },
   "dependencies": {
+    "@electron/notarize": "^2.3.2",
     "antd": "^5.10.1",
     "axios": "^1.6.2",
-    "electron-store": "^8.1.0",
-    "express": "^4.19.2",
-    "portfinder": "^1.0.32",
-    "@electron/notarize": "^2.3.2",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
+    "electron-store": "^8.1.0",
     "electron-updater": "^6.1.4",
+    "express": "^4.19.2",
+    "fix-path": "^4.0.0",
+    "portfinder": "^1.0.32",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.16.0"
