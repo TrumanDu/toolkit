@@ -226,7 +226,13 @@ app
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
-      if (mainWindow === null) createWindow();
+      if (mainWindow === null) {
+        createWindow();
+      } else if (dashboardWindow?.isVisible()) {
+        dashboardWindow.hide();
+      } else {
+        dashboardWindow?.show();
+      }
     });
   })
   .catch(console.log);
