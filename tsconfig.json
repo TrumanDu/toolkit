@@ -17,6 +17,10 @@
     "allowJs": true,
     "outDir": ".erb/dll"
   },
+  "include": [
+    "src",
+    "src/types/*.d.ts"
+  ],
   "exclude": [
     "test",
     "release/build",
