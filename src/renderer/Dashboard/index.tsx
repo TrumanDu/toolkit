@@ -1,3 +1,4 @@
+/* eslint-disable func-names */
 /* eslint-disable radix */
 /* eslint-disable @typescript-eslint/no-shadow */
 /* eslint-disable no-console */
@@ -49,6 +50,7 @@ import {
 } from 'antd';
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
+import baiduAnalyticsRenderer from './baiduAnalutics';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -172,6 +174,17 @@ function Dashboard() {
     refreshPlugins();
     onListenerMainProcess();
     getAppSetting();
+    try {
+      console.log('baidu analytics');
+      baiduAnalyticsRenderer(
+        '077ebf5af4b96181076eefc3db60ad2c',
+        function (_hmt: string[][]) {
+          _hmt.push(['_trackPageview', '/']);
+        },
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }, []);
 
   const onMenu = (item: any) => {

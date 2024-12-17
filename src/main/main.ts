@@ -9,30 +9,24 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import path from 'path';
 import fixPath from 'fix-path';
-import {
-  app,
-  BrowserWindow,
-  globalShortcut,
-  shell,
-  ipcMain,
-  Menu,
-} from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
 
 import log from 'electron-log';
-import { resolveHtmlPath, getAssetPath, getAppDir } from './util';
+import { getAppDir } from './util';
 import createTray from './tray';
 import API from './api';
 import AppUpdater from './app_updater';
 import InitCheck from './init_check';
+import createDashboardWindow from './dashboard';
+
+const { baiduAnalyticsMain } = require('@nostar/baidu-analytics-electron');
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 
 fixPath();
 
-let mainWindow: BrowserWindow | null = null;
 let dashboardWindow: BrowserWindow | null = null;
 
 if (process.env.NODE_ENV === 'production') {
@@ -47,6 +41,8 @@ if (isDebug) {
 }
 const initCheck = new InitCheck();
 
+baiduAnalyticsMain(ipcMain);
+
 const installExtensions = async () => {
   const installer = require('electron-devtools-installer');
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
@@ -59,120 +55,19 @@ const installExtensions = async () => {
     )
     .catch(console.log);
 };
-const createDashboardWindow = async () => {
-  const newDashboardWindow = new BrowserWindow({
-    show: false,
-    center: true,
-    autoHideMenuBar: true,
-    width: 1560,
-    height: 900,
-    icon: getAssetPath('icon.png'),
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: true,
-      webSecurity: false,
-      navigateOnDragDrop: true,
-      preload: app.isPackaged
-        ? path.join(__dirname, 'preload.js')
-        : path.join(__dirname, '../../.erb/dll/preload.js'),
-    },
-  });
-
-  if (process.platform === 'darwin') {
-    app.dock.setIcon(getAssetPath('icon.png'));
-    app.dock.bounce();
-  }
-
-  newDashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
-  newDashboardWindow.on('close', (event) => {
-    newDashboardWindow.hide();
-    event.preventDefault();
-  });
-  // 当窗口准备好时，最大化窗口
-  newDashboardWindow.webContents.on('did-finish-load', () => {
-    newDashboardWindow.show();
-  });
-  newDashboardWindow.webContents.setWindowOpenHandler(
-    (data: { url: string }) => {
-      shell.openExternal(data.url);
-      return { action: 'deny' };
-    },
-  );
-  newDashboardWindow.webContents.on('will-navigate', (event, url) => {
-    // 判断链接是否为本地文件
-    if (!url.startsWith('file://')) {
-      event.preventDefault();
-      shell.openExternal(url); // 打开默认浏览器并跳转到该链接
-    }
-  });
-  return newDashboardWindow;
-};
 
 const createWindow = async () => {
   if (isDebug) {
-    // await installExtensions();
+    await installExtensions();
   }
 
-  mainWindow = new BrowserWindow({
-    show: false,
-    frame: false,
-    titleBarStyle: 'hidden',
-    center: true,
-    transparent: true,
-    width: 678,
-    height: 680,
-    icon: getAssetPath('icon.png'),
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: true,
-      webSecurity: false,
-      preload: app.isPackaged
-        ? path.join(__dirname, 'preload.js')
-        : path.join(__dirname, '../../.erb/dll/preload.js'),
-    },
-  });
-  mainWindow.setPosition(
-    mainWindow.getPosition()[0],
-    mainWindow.getPosition()[1] / 2 + 200,
-  );
-
-  mainWindow.loadURL(resolveHtmlPath('main.html'));
-
-  mainWindow.on('ready-to-show', () => {
-    if (!mainWindow) {
-      throw new Error('"mainWindow" is not defined');
-    }
-  });
-  // 当窗口完成加载后，自动获得焦点
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow?.focus();
-  });
-  if (!isDebug) {
-    mainWindow.on('blur', () => {
-      mainWindow?.hide();
-    });
-  }
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-  mainWindow.setMenu(null);
-
-  // Open urls in the user's browser
-  mainWindow.webContents.setWindowOpenHandler((edata) => {
-    shell.openExternal(edata.url);
-    return { action: 'deny' };
-  });
-
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
+  // eslint-disable-next-line no-new
   new AppUpdater();
   dashboardWindow = await createDashboardWindow();
   const api = new API(dashboardWindow, initCheck);
-  api.listen(mainWindow);
+  api.listen();
   // 创建系统托盘图标
-  createTray(mainWindow, dashboardWindow, api);
-  mainWindow.setSkipTaskbar(true);
-  // mainWindow.setIgnoreMouseEvents(true);
+  createTray(dashboardWindow, api);
 };
 
 /**
@@ -193,18 +88,6 @@ app
     createWindow();
     // 注册全局快捷键
     if (
-      !globalShortcut.register('CmdOrCtrl+Alt+A', () => {
-        // 在此处执行快捷键触发的操作
-        if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
-        }
-      })
-    ) {
-      console.log('main shortcut register failed.');
-    }
-
-    if (
       !globalShortcut.register('CmdOrCtrl+Alt+O', () => {
         if (dashboardWindow) {
           dashboardWindow.show();
@@ -216,17 +99,13 @@ app
 
     // 检测快捷键注册状态
     log.info(
-      'main shortcut register:',
-      globalShortcut.isRegistered('CmdOrCtrl+Alt+A'),
-    );
-    log.info(
       'dashboard shortcut register:',
       globalShortcut.isRegistered('CmdOrCtrl+Alt+O'),
     );
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
-      if (mainWindow === null) {
+      if (dashboardWindow === null) {
         createWindow();
       } else if (dashboardWindow?.isVisible()) {
         dashboardWindow.hide();

@@ -23,25 +23,16 @@ class API {
     this.pluginManager = new PluginManager(initCheck, this.setting);
   }
 
-  public listen(mainWindow: BrowserWindow) {
+  public listen() {
     ipcMain.on('trigger', async (event, arg) => {
       console.log(arg);
       try {
-        const window = arg.winId ? BrowserWindow.fromId(arg.winId) : mainWindow;
-        const data = await this[arg.type](arg, window, event);
+        const data = await this[arg.type](arg, event);
         event.returnValue = data;
       } catch (error) {
         log.error(error);
       }
     });
-  }
-
-  public hideMainWindow(_arg: any, window: BrowserWindow) {
-    window?.hide();
-  }
-
-  public showMainWindow(_arg: any, window: BrowserWindow) {
-    window.show();
   }
 
   public listPlugins() {
@@ -52,8 +43,7 @@ class API {
     return this.pluginManager.reloadPlugins();
   }
 
-  public openPlugin(arg: any, window: BrowserWindow) {
-    this.hideMainWindow(arg, window);
+  public openPlugin(arg: any) {
     const pluginObj = this.pluginManager.getPlugin(arg.data);
     if (pluginObj.mode && pluginObj.mode === 'single') {
       const name = arg.data;
@@ -72,7 +62,7 @@ class API {
     }
   }
 
-  public removePlugin(_arg: any, window: BrowserWindow) {
+  public removePlugin(_arg: any) {
     this.pluginManager.removePlugin(_arg.data);
     return this.listPlugins();
   }
@@ -89,7 +79,7 @@ class API {
     return this.pluginManager.getStoreAppList();
   }
 
-  public async installPlugin(arg: any, _window: BrowserWindow, event) {
+  public async installPlugin(arg: any, event) {
     const data = await this.pluginManager.installPlugin(arg.data);
     const response = {
       operator: 'installPlugin',
@@ -105,7 +95,7 @@ class API {
     return this.setting.getSetting();
   }
 
-  public saveSettingByKey(arg: any, window: BrowserWindow) {
+  public saveSettingByKey(arg: any) {
     const { data } = arg;
     this.setting.updateByKey(data.key, data.value);
   }

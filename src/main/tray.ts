@@ -3,11 +3,7 @@ import pkg from '../../package.json';
 import { getAppDir, getAssetPath } from './util';
 import API from './api';
 
-function createTray(
-  window: BrowserWindow,
-  dashboard: BrowserWindow,
-  api: API,
-): Promise<Tray> {
+function createTray(dashboard: BrowserWindow, api: API): Promise<Tray> {
   return new Promise((resolve) => {
     const iconPath = getAssetPath('icons/16x16.png');
 
