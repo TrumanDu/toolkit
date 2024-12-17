@@ -50,7 +50,7 @@ import {
 } from 'antd';
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
-import baiduAnalyticsRenderer from './baiduAnalutics';
+import baiduAnalyticsRenderer from './baiduAnalytics';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -147,6 +147,20 @@ function Dashboard() {
     });
   };
 
+  const baiduAnalytics = () => {
+    try {
+      console.log('baidu analytics');
+      baiduAnalyticsRenderer(
+        '077ebf5af4b96181076eefc3db60ad2c',
+        (_hmt: string[][]) => {
+          _hmt.push(['_trackPageview', '/']);
+        },
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const refreshPlugins = () => {
     console.log('refresh plugin');
     const plugins = window.electron.ipcRenderer.ipcSendSync(
@@ -170,21 +184,12 @@ function Dashboard() {
     const setting = window.electron.ipcRenderer.ipcSendSync('getSetting', null);
     SetSetting(setting);
   };
+
   useEffect(() => {
     refreshPlugins();
     onListenerMainProcess();
     getAppSetting();
-    try {
-      console.log('baidu analytics');
-      baiduAnalyticsRenderer(
-        '077ebf5af4b96181076eefc3db60ad2c',
-        function (_hmt: string[][]) {
-          _hmt.push(['_trackPageview', '/']);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-    }
+    baiduAnalytics();
   }, []);
 
   const onMenu = (item: any) => {
