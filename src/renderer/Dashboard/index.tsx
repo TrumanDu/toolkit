@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable func-names */
 /* eslint-disable radix */
 /* eslint-disable @typescript-eslint/no-shadow */
@@ -17,7 +18,7 @@
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { createRoot } from 'react-dom/client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   DeleteOutlined,
   CloudDownloadOutlined,
@@ -123,45 +124,7 @@ function Dashboard() {
     refreshResult(resultList);
   };
 
-  const onListenerMainProcess = () => {
-    window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
-      if (response.operator === 'installPlugin') {
-        const { result } = response;
-        const { name } = response.result;
-        installing.delete(name);
-        if (result == undefined || result.code < 0) {
-          console.error(result);
-          notification.error({
-            message: `Install ${name}  failed!`,
-            description: result == undefined ? '' : JSON.stringify(result.data),
-          });
-          setInstalling(new Map(installing.entries()));
-        } else {
-          notification.success({
-            message: `Install plugin succeed!`,
-            description: `plugin name:${name}`,
-          });
-          refreshStorePlugins();
-        }
-      }
-    });
-  };
-
-  const baiduAnalytics = () => {
-    try {
-      console.log('baidu analytics');
-      baiduAnalyticsRenderer(
-        '077ebf5af4b96181076eefc3db60ad2c',
-        (_hmt: string[][]) => {
-          _hmt.push(['_trackPageview', '/']);
-        },
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const refreshPlugins = () => {
+  const refreshPlugins = useCallback(() => {
     console.log('refresh plugin');
     const plugins = window.electron.ipcRenderer.ipcSendSync(
       'listPlugins',
@@ -169,7 +132,7 @@ function Dashboard() {
     );
     setAllPlugins(plugins);
     refreshResult(plugins);
-  };
+  }, []);
 
   const removePlugin = (name: string) => {
     const plugins = window.electron.ipcRenderer.ipcSendSync(
@@ -180,15 +143,58 @@ function Dashboard() {
     setAllPlugins(plugins);
     refreshResult(plugins);
   };
-  const getAppSetting = () => {
-    const setting = window.electron.ipcRenderer.ipcSendSync('getSetting', null);
-    SetSetting(setting);
-  };
 
   useEffect(() => {
     refreshPlugins();
+
+    const onListenerMainProcess = () => {
+      window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
+        if (response.operator === 'installPlugin') {
+          const { result } = response;
+          const { name } = response.result;
+          installing.delete(name);
+          if (result == undefined || result.code < 0) {
+            console.error(result);
+            notification.error({
+              message: `Install ${name}  failed!`,
+              description:
+                result == undefined ? '' : JSON.stringify(result.data),
+            });
+            setInstalling(new Map(installing.entries()));
+          } else {
+            notification.success({
+              message: `Install plugin succeed!`,
+              description: `plugin name:${name}`,
+            });
+            refreshStorePlugins();
+          }
+        }
+      });
+    };
     onListenerMainProcess();
+
+    const getAppSetting = () => {
+      const setting = window.electron.ipcRenderer.ipcSendSync(
+        'getSetting',
+        null,
+      );
+      SetSetting(setting);
+    };
     getAppSetting();
+
+    const baiduAnalytics = () => {
+      try {
+        console.log('baidu analytics');
+        baiduAnalyticsRenderer(
+          '077ebf5af4b96181076eefc3db60ad2c',
+          (_hmt: string[][]) => {
+            _hmt.push(['_trackPageview', '/']);
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
     baiduAnalytics();
   }, []);
 
