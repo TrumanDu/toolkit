@@ -163,13 +163,14 @@ class PluginManager {
         webSecurity: false,
         contextIsolation: true,
         session: ses,
-        backgroundThrottling: false,
+        backgroundThrottling: true,
         preload: pluginObj.preload ? pluginObj.preloadPath : null,
         webviewTag: true,
         nodeIntegration: true,
         navigateOnDragDrop: true,
         experimentalFeatures: true,
         spellcheck: false,
+        enableWebSQL: false,
       },
     });
     pluginWin.on('resize', () => {
@@ -233,6 +234,7 @@ class PluginManager {
       if (pluginViewPool) {
         pluginViewPool.delete(name);
       }
+      if (global.gc) global.gc();
     });
 
     return pluginWin;

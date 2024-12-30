@@ -1,6 +1,6 @@
 {
   "name": "Toolkit",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",

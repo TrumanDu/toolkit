@@ -74,9 +74,21 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
+// 添加内存清理函数
+function cleanupResources() {
+  if (dashboardWindow) {
+    dashboardWindow.webContents.closeDevTools();
+    dashboardWindow = null;
+  }
+  // 注销所有快捷键
+  globalShortcut.unregisterAll();
+  // 清理 IPC 监听器
+  ipcMain.removeAllListeners();
+}
+
+// 修改 window-all-closed 事件处理
 app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
+  cleanupResources();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -107,19 +119,15 @@ app
       // dock icon is clicked and there are no other windows open.
       if (dashboardWindow === null) {
         createWindow();
-      } else if (dashboardWindow?.isVisible()) {
-        dashboardWindow.hide();
-      } else {
-        dashboardWindow?.show();
       }
     });
   })
   .catch(console.log);
 
-// 拦截系统默认的 Quit 行为
+// 修改 before-quit 事件处理
 app.on('before-quit', (event) => {
-  event.preventDefault(); // 阻止默认退出
-  // 强制退出
+  event.preventDefault();
+  cleanupResources();
   app.exit();
 });
 

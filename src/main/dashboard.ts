@@ -15,6 +15,9 @@ const createDashboardWindow = async () => {
       contextIsolation: true,
       webSecurity: false,
       navigateOnDragDrop: true,
+      backgroundThrottling: true,
+      enableWebSQL: false,
+      spellcheck: false,
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
@@ -34,6 +37,7 @@ const createDashboardWindow = async () => {
   // 当窗口准备好时，最大化窗口
   newDashboardWindow.webContents.on('did-finish-load', () => {
     newDashboardWindow.show();
+    if (global.gc) global.gc();
   });
   newDashboardWindow.webContents.setWindowOpenHandler(
     (data: { url: string }) => {
@@ -47,6 +51,10 @@ const createDashboardWindow = async () => {
       event.preventDefault();
       shell.openExternal(url); // 打开默认浏览器并跳转到该链接
     }
+  });
+  // 当窗口隐藏时释放内存
+  newDashboardWindow.on('hide', () => {
+    if (global.gc) global.gc();
   });
   return newDashboardWindow;
 };
