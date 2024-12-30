@@ -52,6 +52,7 @@ import {
 import { Footer } from 'antd/es/layout/layout';
 import Meta from 'antd/es/card/Meta';
 import baiduAnalyticsRenderer from './baiduAnalytics';
+import UpdateProgress from './components/UpdateProgress';
 
 const { Title } = Typography;
 const { Sider, Content } = Layout;
@@ -68,6 +69,13 @@ function Dashboard() {
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
   const [setting, SetSetting] = useState(null);
+  const [progressVisible, setProgressVisible] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressStatus, setProgressStatus] = useState({
+    transferred: 0,
+    total: 0,
+    bytesPerSecond: 0,
+  });
 
   const refreshResult = (plugins: any[]) => {
     if (plugins.length == 0) {
@@ -196,6 +204,26 @@ function Dashboard() {
       }
     };
     baiduAnalytics();
+
+    // 监听显示进度条窗口
+    window.electron.ipcRenderer.on('show-progress-window', () => {
+      setProgressVisible(true);
+    });
+
+    // 监听更新进度
+    window.electron.ipcRenderer.on('update-progress', (data: any) => {
+      setProgress(Math.floor(data.percent));
+      setProgressStatus({
+        transferred: data.transferred,
+        total: data.total,
+        bytesPerSecond: data.bytesPerSecond,
+      });
+    });
+
+    // 监听关闭进度条窗口
+    window.electron.ipcRenderer.on('close-progress-window', () => {
+      setProgressVisible(false);
+    });
   }, []);
 
   const onMenu = (item: any) => {
@@ -569,6 +597,11 @@ function Dashboard() {
           <a href="https://www.trumandu.top">TrumanDu</a>
         </Footer>
       </Layout>
+      <UpdateProgress
+        visible={progressVisible}
+        progress={progress}
+        status={progressStatus}
+      />
     </Layout>
   );
 }

@@ -61,9 +61,8 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  // eslint-disable-next-line no-new
-  new AppUpdater();
   dashboardWindow = await createDashboardWindow();
+  new AppUpdater(dashboardWindow);
   const api = new API(dashboardWindow, initCheck);
   api.listen();
   // 创建系统托盘图标
