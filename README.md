@@ -39,6 +39,14 @@ npm run package
 npm run package -- --mac
 ```
 
+## Issue
+
+Mac 安装问题：
+
+```
+sudo xattr -dr com.apple.quarantine /Applications/Toolkit.app
+```
+
 ## Docs
 
 See our [docs and guides here]()
