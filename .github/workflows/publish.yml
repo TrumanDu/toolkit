@@ -3,7 +3,7 @@ name: Publish
 on:
   push:
     tags:
-      - 'v*' # 匹配所有以 v 开头的标签，比如 v1.0.0
+      - 'v*'
 
 jobs:
   publish:
