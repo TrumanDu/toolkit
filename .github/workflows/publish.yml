@@ -1,8 +1,9 @@
 name: Publish
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*' # 匹配所有以 v 开头的标签，比如 v1.0.0
 
 jobs:
   publish:
