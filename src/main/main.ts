@@ -62,7 +62,17 @@ const createWindow = async () => {
   }
 
   dashboardWindow = await createDashboardWindow();
-  new AppUpdater(dashboardWindow);
+
+  // 等待窗口创建完成后再初始化更新器
+  dashboardWindow.webContents.on('did-finish-load', () => {
+    // 初始化自动更新
+    if (dashboardWindow) {
+      const appUpdater = new AppUpdater(dashboardWindow);
+      // 由于checkForUpdatesOnStartup是私有方法,改为调用public方法
+      appUpdater.checkForUpdates();
+    }
+  });
+
   const api = new API(dashboardWindow, initCheck);
   api.listen();
   // 创建系统托盘图标
@@ -118,6 +128,8 @@ app
       // dock icon is clicked and there are no other windows open.
       if (dashboardWindow === null) {
         createWindow();
+      } else {
+        dashboardWindow.show();
       }
     });
   })
