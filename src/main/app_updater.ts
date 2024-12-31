@@ -60,6 +60,9 @@ export default class AppUpdater {
           autoUpdater.downloadUpdate();
           // 显示进度条窗口
           this.mainWindow.webContents.send('show-progress-window');
+        } else {
+          // 用户选择暂不更新，取消自动更新
+          autoUpdater.autoInstallOnAppQuit = false;
         }
       }
     });
@@ -105,13 +108,17 @@ export default class AppUpdater {
         log.info('开始安装更新...');
         autoUpdater.quitAndInstall(false, true);
       } else {
-        log.info('下次安装...');
+        // 用户选择暂不安装，取消自动更新
+        log.info('用户选择暂不安装');
+        autoUpdater.autoInstallOnAppQuit = false;
       }
     });
   }
 
   public async checkForUpdates(): Promise<void> {
     try {
+      // 确保每次检查更新前重置自动安装设置
+      autoUpdater.autoInstallOnAppQuit = true;
       log.info('开始检查更新...');
       await autoUpdater.checkForUpdates();
     } catch (error) {
