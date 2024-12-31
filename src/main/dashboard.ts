@@ -31,10 +31,8 @@ const createDashboardWindow = async () => {
 
   newDashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
   newDashboardWindow.on('close', (event) => {
-    if (process.platform === 'darwin') {
-      event.preventDefault();
-      newDashboardWindow?.hide();
-    }
+    newDashboardWindow.hide();
+    event.preventDefault();
   });
 
   // 当窗口准备好时，最大化窗口
