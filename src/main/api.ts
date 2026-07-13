@@ -1,12 +1,20 @@
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable class-methods-use-this */
-// @ts-nocheck
-import { ipcMain, BrowserWindow, Notification } from 'electron';
+import { ipcMain, BrowserWindow, Notification, IpcMainEvent } from 'electron';
 import log from 'electron-log';
 import PluginManager from './plugin';
 import Setting from './setting';
 import InitCheck from './init_check';
+
+// Whitelist of methods callable via IPC
+const ALLOWED_METHODS = new Set([
+  'listPlugins',
+  'reloadPlugins',
+  'openPlugin',
+  'removePlugin',
+  'getStoreAppList',
+  'installPlugin',
+  'getSetting',
+  'saveSettingByKey',
+]);
 
 class API {
   private setting: Setting;
@@ -24,10 +32,16 @@ class API {
   }
 
   public listen() {
-    ipcMain.on('trigger', async (event, arg) => {
-      console.log(arg);
+    ipcMain.on('trigger', async (event: IpcMainEvent, arg: { type: string; data: any }) => {
+      const method = arg.type;
+      console.log('IPC trigger:', method);
+      if (!ALLOWED_METHODS.has(method)) {
+        log.error(`IPC: unknown method "${method}"`);
+        event.returnValue = undefined;
+        return;
+      }
       try {
-        const data = await this[arg.type](arg, event);
+        const data = await (this as any)[method](arg, event);
         event.returnValue = data;
       } catch (error) {
         log.error(error);
@@ -43,12 +57,12 @@ class API {
     return this.pluginManager.reloadPlugins();
   }
 
-  public openPlugin(arg: any) {
+  public async openPlugin(arg: { data: string }) {
     const pluginObj = this.pluginManager.getPlugin(arg.data);
     if (pluginObj.mode && pluginObj.mode === 'single') {
       const name = arg.data;
       if (!this.pluginViewPool.has(name)) {
-        const pluginWin = this.pluginManager.openPlugin(
+        const pluginWin = await this.pluginManager.openPlugin(
           name,
           this.pluginViewPool,
         );
@@ -58,28 +72,20 @@ class API {
         pluginWin?.show();
       }
     } else {
-      this.pluginManager.openPlugin(arg.data, this.pluginViewPool);
+      await this.pluginManager.openPlugin(arg.data, this.pluginViewPool);
     }
   }
 
-  public removePlugin(_arg: any) {
-    this.pluginManager.removePlugin(_arg.data);
+  public removePlugin(arg: { data: string }) {
+    this.pluginManager.removePlugin(arg.data);
     return this.listPlugins();
-  }
-
-  public notification(title: string, body: string) {
-    const notification = new Notification({
-      title,
-      body,
-    });
-    notification.show();
   }
 
   public getStoreAppList() {
     return this.pluginManager.getStoreAppList();
   }
 
-  public async installPlugin(arg: any, event) {
+  public async installPlugin(arg: { data: any }, event: IpcMainEvent) {
     const data = await this.pluginManager.installPlugin(arg.data);
     const response = {
       operator: 'installPlugin',
@@ -95,7 +101,7 @@ class API {
     return this.setting.getSetting();
   }
 
-  public saveSettingByKey(arg: any) {
+  public saveSettingByKey(arg: { data: { key: string; value: any } }) {
     const { data } = arg;
     this.setting.updateByKey(data.key, data.value);
   }

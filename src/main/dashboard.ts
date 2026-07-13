@@ -16,11 +16,8 @@ const createDashboardWindow = async () => {
       webSecurity: false,
       navigateOnDragDrop: true,
       backgroundThrottling: true,
-      enableWebSQL: false,
       spellcheck: false,
-      preload: app.isPackaged
-        ? path.join(__dirname, 'preload.js')
-        : path.join(__dirname, '../../.erb/dll/preload.js'),
+      preload: path.join(__dirname, '../preload/index.js'),
     },
   });
 
@@ -29,7 +26,7 @@ const createDashboardWindow = async () => {
     app.dock.bounce();
   }
 
-  newDashboardWindow.loadURL(resolveHtmlPath('dashboard.html'));
+  newDashboardWindow.loadURL(resolveHtmlPath('index.html'));
   newDashboardWindow.on('close', (event) => {
     newDashboardWindow.hide();
     event.preventDefault();

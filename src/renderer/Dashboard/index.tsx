@@ -17,7 +17,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { createRoot } from 'react-dom/client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   DeleteOutlined,
@@ -49,16 +48,15 @@ import {
   Switch,
   Button,
 } from 'antd';
-import { Footer } from 'antd/es/layout/layout';
-import Meta from 'antd/es/card/Meta';
 import baiduAnalyticsRenderer from './baiduAnalytics';
 import UpdateProgress from './components/UpdateProgress';
 
 const { Title } = Typography;
-const { Sider, Content } = Layout;
+const { Sider, Content, Footer } = Layout;
+const { Meta } = Card;
 
 function Dashboard() {
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [collapsed, setCollapsed] = useState(true);
   const [hoverable, setHoverable] = useState(false);
   const [inputSearch, setInputSearch] = useState('');
@@ -68,7 +66,7 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
-  const [setting, SetSetting] = useState(null);
+  const [setting, setSetting] = useState<{ sort: boolean } | null>(null);
   const [progressVisible, setProgressVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState({
@@ -155,38 +153,35 @@ function Dashboard() {
   useEffect(() => {
     refreshPlugins();
 
-    const onListenerMainProcess = () => {
-      window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
-        if (response.operator === 'installPlugin') {
-          const { result } = response;
-          const { name } = response.result;
-          installing.delete(name);
-          if (result == undefined || result.code < 0) {
-            console.error(result);
-            notification.error({
-              message: `Install ${name}  failed!`,
-              description:
-                result == undefined ? '' : JSON.stringify(result.data),
-            });
-            setInstalling(new Map(installing.entries()));
-          } else {
-            notification.success({
-              message: `Install plugin succeed!`,
-              description: `plugin name:${name}`,
-            });
-            refreshStorePlugins();
-          }
+    const offDashboardReply = window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
+      if (response.operator === 'installPlugin') {
+        const { result } = response;
+        const { name } = response.result;
+        installing.delete(name);
+        if (result == undefined || result.code < 0) {
+          console.error(result);
+          notification.error({
+            message: `Install ${name}  failed!`,
+            description:
+              result == undefined ? '' : JSON.stringify(result.data),
+          });
+          setInstalling(new Map(installing.entries()));
+        } else {
+          notification.success({
+            message: `Install plugin succeed!`,
+            description: `plugin name:${name}`,
+          });
+          refreshStorePlugins();
         }
-      });
-    };
-    onListenerMainProcess();
+      }
+    });
 
     const getAppSetting = () => {
       const setting = window.electron.ipcRenderer.ipcSendSync(
         'getSetting',
         null,
       );
-      SetSetting(setting);
+      setSetting(setting);
     };
     getAppSetting();
 
@@ -206,12 +201,12 @@ function Dashboard() {
     baiduAnalytics();
 
     // 监听显示进度条窗口
-    window.electron.ipcRenderer.on('show-progress-window', () => {
+    const offShowProgress = window.electron.ipcRenderer.on('show-progress-window', () => {
       setProgressVisible(true);
     });
 
     // 监听更新进度
-    window.electron.ipcRenderer.on('update-progress', (data: any) => {
+    const offUpdateProgress = window.electron.ipcRenderer.on('update-progress', (data: any) => {
       setProgress(Math.floor(data.percent));
       setProgressStatus({
         transferred: data.transferred,
@@ -221,9 +216,16 @@ function Dashboard() {
     });
 
     // 监听关闭进度条窗口
-    window.electron.ipcRenderer.on('close-progress-window', () => {
+    const offCloseProgress = window.electron.ipcRenderer.on('close-progress-window', () => {
       setProgressVisible(false);
     });
+
+    return () => {
+      offDashboardReply();
+      offShowProgress();
+      offUpdateProgress();
+      offCloseProgress();
+    };
   }, []);
 
   const onMenu = (item: any) => {
@@ -246,7 +248,7 @@ function Dashboard() {
   const generatorStoreApp = (result: any) => {
     return result.map((plugin: ToolkitPlugin) => {
       return (
-        <Col md={8} lg={4} key={`${plugin.name}}`}>
+        <Col md={8} lg={4} key={`store-${plugin.name}`}>
           <Card
             title={plugin.pluginName}
             hoverable={hoverable}
@@ -255,7 +257,7 @@ function Dashboard() {
                 ? []
                 : [
                     <Spin
-                      key={`${plugin.name}-spin-${Math.random()}`}
+                      key={`${plugin.name}-spin`}
                       spinning={
                         installing.has(plugin.name) &&
                         installing.get(plugin.name)
@@ -376,7 +378,7 @@ function Dashboard() {
   const renderStorePage = (storePlugins: ToolkitPlugin[]) => {
     const items: TabsProps['items'] = [
       {
-        key: `all-tab${Math.random()}`,
+        key: 'all-tab',
         label: 'ALL',
         children: <Row gutter={[24, 16]}>{generatorStoreApp(result)}</Row>,
       },
@@ -415,9 +417,7 @@ function Dashboard() {
     );
   };
   const onSettingSwitch = (checked: boolean) => {
-    const newSetting = setting;
-    newSetting.sort = checked;
-    SetSetting(newSetting);
+    setSetting({ ...setting, sort: checked });
     try {
       window.electron.ipcRenderer.ipcSend('saveSettingByKey', {
         key: 'sort',
@@ -606,6 +606,4 @@ function Dashboard() {
   );
 }
 
-const container = document.getElementById('root') as HTMLElement;
-const root = createRoot(container);
-root.render(<Dashboard />);
+export default Dashboard;

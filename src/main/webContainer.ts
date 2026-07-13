@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-const express = require('express');
-const portFinder = require('portfinder');
+import express from 'express';
+import portFinder from 'portfinder';
 
 class WebContainer {
   private pluginMap = new Map();
