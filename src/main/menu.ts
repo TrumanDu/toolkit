@@ -4,7 +4,9 @@ import {
   shell,
   BrowserWindow,
   MenuItemConstructorOptions,
+  dialog,
 } from 'electron';
+import { getAssetPath } from './util';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -58,7 +60,15 @@ export default class MenuBuilder {
       submenu: [
         {
           label: 'About Toolkit',
-          selector: 'orderFrontStandardAboutPanel:',
+          click: () => {
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'About Toolkit',
+              icon: getAssetPath('icon.png'),
+              message: 'Toolkit',
+              detail: `Version: ${app.getVersion()}\nAuthor: TrumanDu\n\n极简、插件化的工具集！`,
+            });
+          },
         },
         { type: 'separator' },
         { label: 'Services', submenu: [] },

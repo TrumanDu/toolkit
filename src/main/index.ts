@@ -7,10 +7,10 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, dialog } from 'electron';
 
 import log from 'electron-log';
-import { getAppDir } from './util';
+import { getAppDir, getAssetPath } from './util';
 import createTray from './tray';
 import API from './api';
 import AppUpdater from './app_updater';
@@ -18,10 +18,19 @@ import InitCheck from './init_check';
 import createDashboardWindow from './dashboard';
 
 import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
-// IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
+
+// IMPORTANT: to fix file save problem in excalidraw
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 app.name = 'Toolkit';
+
+// macOS: set dock icon early so it doesn't show Electron default
+if (process.platform === 'darwin') {
+  const iconPath = getAssetPath('icon.png');
+  app.whenReady().then(() => {
+    app.dock?.setIcon(iconPath);
+  });
+}
 
 fixPath();
 
