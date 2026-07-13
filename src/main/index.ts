@@ -7,7 +7,7 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, protocol, net } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
@@ -220,6 +220,12 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    // 注册 toolkit-file 协议处理器，用于加载本地图片等资源
+    protocol.handle('toolkit-file', (request) => {
+      const filePath = decodeURIComponent(request.url.slice('toolkit-file:///'.length));
+      return net.fetch(`file://${filePath}`);
+    });
+
     // macOS: 构建应用菜单，设置 Dock 图标
     buildAppMenu();
     if (process.platform === 'darwin') {
@@ -259,6 +265,14 @@ app.on('before-quit', (event) => {
   cleanupResources();
   app.exit();
 });
+
+// 注册自定义协议，让 renderer 能加载本地文件（logo 等）
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'toolkit-file',
+    privileges: { standard: true, supportFetchAPI: true, bypassCSP: true, secure: true },
+  },
+]);
 
 app.on('ready', () => {
   const appInstallDir = getAppDir();

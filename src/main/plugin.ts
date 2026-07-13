@@ -70,9 +70,9 @@ class PluginManager {
           pluginObj.version = packageObj.version;
         }
         if (pluginObj.logo) {
-          pluginObj.logoPath = path.join(pluginPath, pluginObj.logo);
+          pluginObj.logoPath = `toolkit-file:///${path.join(pluginPath, pluginObj.logo)}`;
         } else {
-          pluginObj.logoPath = getAssetPath('icon.png');
+          pluginObj.logoPath = `toolkit-file:///${getAssetPath('icon.png')}`;
         }
 
         pluginObj.pluginPath = pluginPath;
