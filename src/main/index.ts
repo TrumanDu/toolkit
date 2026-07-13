@@ -27,6 +27,14 @@ app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 app.name = 'Toolkit';
 
+// 注册自定义协议（必须在 app.whenReady 之前）
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'toolkit-file',
+    privileges: { standard: true, supportFetchAPI: true, bypassCSP: true, secure: true },
+  },
+]);
+
 fixPath();
 
 let dashboardWindow: BrowserWindow | null = null;
@@ -223,7 +231,25 @@ app
     // 注册 toolkit-file 协议处理器，用于加载本地图片等资源
     protocol.handle('toolkit-file', (request) => {
       const filePath = decodeURIComponent(request.url.slice('toolkit-file:///'.length));
-      return net.fetch(`file://${filePath}`);
+      try {
+        const data = fs.readFileSync(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeMap: Record<string, string> = {
+          '.png': 'image/png',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.gif': 'image/gif',
+          '.svg': 'image/svg+xml',
+          '.ico': 'image/x-icon',
+          '.webp': 'image/webp',
+        };
+        const contentType = mimeMap[ext] || 'application/octet-stream';
+        return new Response(data, {
+          headers: { 'Content-Type': contentType },
+        });
+      } catch (e) {
+        return new Response('Not Found', { status: 404 });
+      }
     });
 
     // macOS: 构建应用菜单，设置 Dock 图标
@@ -265,14 +291,6 @@ app.on('before-quit', (event) => {
   cleanupResources();
   app.exit();
 });
-
-// 注册自定义协议，让 renderer 能加载本地文件（logo 等）
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'toolkit-file',
-    privileges: { standard: true, supportFetchAPI: true, bypassCSP: true, secure: true },
-  },
-]);
 
 app.on('ready', () => {
   const appInstallDir = getAppDir();
