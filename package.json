@@ -204,5 +204,15 @@
       "owner": "TrumanDu",
       "repo": "toolkit"
     }
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=18.x"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=9.x"
+    }
   }
 }
