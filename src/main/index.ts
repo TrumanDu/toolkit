@@ -7,7 +7,7 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, dialog } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell } from 'electron';
 
 import log from 'electron-log';
 import { getAppDir, getAssetPath } from './util';
@@ -46,13 +46,90 @@ function buildAppMenu() {
         {
           label: 'About Toolkit',
           click: () => {
-            dialog.showMessageBox({
-              type: 'info',
+            const aboutWin = new BrowserWindow({
+              width: 320,
+              height: 360,
+              resizable: false,
+              minimizable: false,
+              maximizable: false,
               title: 'About Toolkit',
-              icon: getAssetPath('icon.png'),
-              message: 'Toolkit',
-              detail: `Version: ${pkg.version}\nAuthor: TrumanDu\n\n极简、插件化的工具集！`,
+              titleBarStyle: 'hiddenInset',
+              center: true,
+              webPreferences: { nodeIntegration: false, contextIsolation: true },
             });
+            aboutWin.setMenuBarVisibility(false);
+            aboutWin.webContents.setWindowOpenHandler(({ url }) => {
+              shell.openExternal(url);
+              return { action: 'deny' };
+            });
+            aboutWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <style>
+                  * { margin: 0; padding: 0; box-sizing: border-box; }
+                  body {
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    background: #f5f5f5;
+                    color: #333;
+                    -webkit-app-region: drag;
+                    user-select: none;
+                  }
+                  .logo {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 18px;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+                    margin-bottom: 20px;
+                  }
+                  .name {
+                    font-size: 22px;
+                    font-weight: 600;
+                    margin-bottom: 6px;
+                  }
+                  .version {
+                    font-size: 13px;
+                    color: #888;
+                    margin-bottom: 16px;
+                  }
+                  .desc {
+                    font-size: 13px;
+                    color: #666;
+                    margin-bottom: 8px;
+                  }
+                  .author {
+                    font-size: 12px;
+                    color: #999;
+                    margin-top: 4px;
+                  }
+                  .author a {
+                    color: #1677ff;
+                    text-decoration: none;
+                    -webkit-app-region: no-drag;
+                  }
+                  .footer {
+                    position: absolute;
+                    bottom: 16px;
+                    font-size: 11px;
+                    color: #bbb;
+                  }
+                </style>
+              </head>
+              <body>
+                <img class="logo" src="file://${getAssetPath('icon.png')}" alt="Toolkit" />
+                <div class="name">Toolkit</div>
+                <div class="version">Version ${pkg.version}</div>
+                <div class="desc">极简、插件化的工具集</div>
+                <div class="author">Created by <a href="https://www.trumandu.top" target="_blank">TrumanDu</a></div>
+                <div class="footer">© 2023 TrumanDu</div>
+              </body>
+              </html>
+            `)}`);
           },
         },
         { type: 'separator' },
