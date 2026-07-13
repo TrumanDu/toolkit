@@ -8,6 +8,8 @@
  */
 import fixPath from 'fix-path';
 import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell } from 'electron';
+import fs from 'fs';
+import path from 'path';
 
 import log from 'electron-log';
 import { getAppDir, getAssetPath } from './util';
@@ -46,6 +48,13 @@ function buildAppMenu() {
         {
           label: 'About Toolkit',
           click: () => {
+            const iconPath = getAssetPath('icon.png');
+            let iconData = '';
+            try {
+              const buf = fs.readFileSync(iconPath);
+              iconData = `data:image/png;base64,${buf.toString('base64')}`;
+            } catch (_) { /* icon not found */ }
+
             const aboutWin = new BrowserWindow({
               width: 320,
               height: 360,
@@ -87,41 +96,16 @@ function buildAppMenu() {
                     box-shadow: 0 2px 12px rgba(0,0,0,0.12);
                     margin-bottom: 20px;
                   }
-                  .name {
-                    font-size: 22px;
-                    font-weight: 600;
-                    margin-bottom: 6px;
-                  }
-                  .version {
-                    font-size: 13px;
-                    color: #888;
-                    margin-bottom: 16px;
-                  }
-                  .desc {
-                    font-size: 13px;
-                    color: #666;
-                    margin-bottom: 8px;
-                  }
-                  .author {
-                    font-size: 12px;
-                    color: #999;
-                    margin-top: 4px;
-                  }
-                  .author a {
-                    color: #1677ff;
-                    text-decoration: none;
-                    -webkit-app-region: no-drag;
-                  }
-                  .footer {
-                    position: absolute;
-                    bottom: 16px;
-                    font-size: 11px;
-                    color: #bbb;
-                  }
+                  .name { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+                  .version { font-size: 13px; color: #888; margin-bottom: 16px; }
+                  .desc { font-size: 13px; color: #666; margin-bottom: 8px; }
+                  .author { font-size: 12px; color: #999; margin-top: 4px; }
+                  .author a { color: #1677ff; text-decoration: none; -webkit-app-region: no-drag; }
+                  .footer { position: absolute; bottom: 16px; font-size: 11px; color: #bbb; }
                 </style>
               </head>
               <body>
-                <img class="logo" src="file://${getAssetPath('icon.png')}" alt="Toolkit" />
+                <img class="logo" src="${iconData}" alt="Toolkit" />
                 <div class="name">Toolkit</div>
                 <div class="version">Version ${pkg.version}</div>
                 <div class="desc">极简、插件化的工具集</div>
