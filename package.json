@@ -58,6 +58,9 @@
       "\\.(css|less|sass|scss)$": "identity-obj-proxy"
     },
     "testEnvironment": "jsdom",
+    "setupFiles": [
+      "./src/__tests__/setup.js"
+    ],
     "testEnvironmentOptions": {
       "url": "http://localhost/"
     },
@@ -65,14 +68,22 @@
       "release/app/dist",
       "release/app/out"
     ],
+    "testMatch": [
+      "**/__tests__/**/*.test.{ts,tsx,js,jsx}"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(react-router|react-router-dom|@remix-run|@ant-design|antd|rc-|@rc-component)/)"
+    ],
     "transform": {
-      "\\.(ts|tsx|js|jsx)$": "ts-jest"
+      "\\.(ts|tsx|js|jsx)$": ["ts-jest", {
+        "tsconfig": "tsconfig.web.json"
+      }]
     }
   },
   "dependencies": {
     "@electron/notarize": "^2.3.2",
     "@nostar/baidu-analytics-electron": "^1.0.7",
-    "antd": "^5.10.1",
+    "antd": "^6.5.1",
     "axios": "^1.6.2",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
@@ -81,18 +92,18 @@
     "express": "^4.19.2",
     "fix-path": "^4.0.0",
     "portfinder": "^1.0.32",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.16.0"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.2.0",
-    "@testing-library/jest-dom": "^6.1.3",
-    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/jest": "^29.5.5",
     "@types/node": "20.6.2",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.3.1",

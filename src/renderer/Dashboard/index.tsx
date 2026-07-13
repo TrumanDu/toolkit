@@ -48,13 +48,12 @@ import {
   Switch,
   Button,
 } from 'antd';
-import { Footer } from 'antd/es/layout/layout';
-import Meta from 'antd/es/card/Meta';
 import baiduAnalyticsRenderer from './baiduAnalytics';
 import UpdateProgress from './components/UpdateProgress';
 
 const { Title } = Typography;
-const { Sider, Content } = Layout;
+const { Sider, Content, Footer } = Layout;
+const { Meta } = Card;
 
 function Dashboard() {
   const inputRef = useRef(null);
