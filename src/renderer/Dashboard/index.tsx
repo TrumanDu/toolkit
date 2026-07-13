@@ -56,7 +56,7 @@ const { Sider, Content, Footer } = Layout;
 const { Meta } = Card;
 
 function Dashboard() {
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [collapsed, setCollapsed] = useState(true);
   const [hoverable, setHoverable] = useState(false);
   const [inputSearch, setInputSearch] = useState('');
@@ -66,7 +66,7 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
-  const [setting, setSetting] = useState<{ sort: boolean }>({ sort: true });
+  const [setting, setSetting] = useState<{ sort: boolean } | null>(null);
   const [progressVisible, setProgressVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState({
@@ -153,31 +153,28 @@ function Dashboard() {
   useEffect(() => {
     refreshPlugins();
 
-    const onListenerMainProcess = () => {
-      const offDashboardReply = window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
-        if (response.operator === 'installPlugin') {
-          const { result } = response;
-          const { name } = response.result;
-          installing.delete(name);
-          if (result == undefined || result.code < 0) {
-            console.error(result);
-            notification.error({
-              message: `Install ${name}  failed!`,
-              description:
-                result == undefined ? '' : JSON.stringify(result.data),
-            });
-            setInstalling(new Map(installing.entries()));
-          } else {
-            notification.success({
-              message: `Install plugin succeed!`,
-              description: `plugin name:${name}`,
-            });
-            refreshStorePlugins();
-          }
+    const offDashboardReply = window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
+      if (response.operator === 'installPlugin') {
+        const { result } = response;
+        const { name } = response.result;
+        installing.delete(name);
+        if (result == undefined || result.code < 0) {
+          console.error(result);
+          notification.error({
+            message: `Install ${name}  failed!`,
+            description:
+              result == undefined ? '' : JSON.stringify(result.data),
+          });
+          setInstalling(new Map(installing.entries()));
+        } else {
+          notification.success({
+            message: `Install plugin succeed!`,
+            description: `plugin name:${name}`,
+          });
+          refreshStorePlugins();
         }
-      });
-    };
-    onListenerMainProcess();
+      }
+    });
 
     const getAppSetting = () => {
       const setting = window.electron.ipcRenderer.ipcSendSync(

@@ -164,7 +164,7 @@ class PluginManager {
         backgroundThrottling: true,
         preload: pluginObj.preload ? pluginObj.preloadPath : null,
         webviewTag: true,
-        nodeIntegration: false,
+        nodeIntegration: true,
         navigateOnDragDrop: true,
         experimentalFeatures: true,
         spellcheck: false,

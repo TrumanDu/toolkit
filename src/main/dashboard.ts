@@ -11,7 +11,7 @@ const createDashboardWindow = async () => {
     height: 900,
     icon: getAssetPath('icon.png'),
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: true,
       webSecurity: false,
       navigateOnDragDrop: true,

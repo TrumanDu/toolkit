@@ -34,6 +34,7 @@ class API {
   public listen() {
     ipcMain.on('trigger', async (event: IpcMainEvent, arg: { type: string; data: any }) => {
       const method = arg.type;
+      console.log('IPC trigger:', method);
       if (!ALLOWED_METHODS.has(method)) {
         log.error(`IPC: unknown method "${method}"`);
         event.returnValue = undefined;
