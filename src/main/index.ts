@@ -5,9 +5,6 @@
  * This module executes inside of electron's main process. You can start
  * electron renderer process from here and communicate with the other processes
  * through IPC.
- *
- * When running `npm run build` or `npm run build:main`, this file is compiled to
- * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import fixPath from 'fix-path';
 import { app, BrowserWindow, globalShortcut, ipcMain } from 'electron';
@@ -20,7 +17,7 @@ import AppUpdater from './app_updater';
 import InitCheck from './init_check';
 import createDashboardWindow from './dashboard';
 
-const { baiduAnalyticsMain } = require('@nostar/baidu-analytics-electron');
+import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
 // IMPORTANT: to fix file save problem in excalidraw: The request is not allowed by the user agent or the platform in the current context
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
@@ -29,38 +26,14 @@ fixPath();
 
 let dashboardWindow: BrowserWindow | null = null;
 
-if (process.env.NODE_ENV === 'production') {
-  const sourceMapSupport = require('source-map-support');
-  sourceMapSupport.install();
-}
-
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
-if (isDebug) {
-  require('electron-debug')();
-}
+
 const initCheck = new InitCheck();
 
 baiduAnalyticsMain(ipcMain);
 
-const installExtensions = async () => {
-  const installer = require('electron-devtools-installer');
-  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  const extensions = ['REACT_DEVELOPER_TOOLS'];
-
-  return installer
-    .default(
-      extensions.map((name) => installer[name]),
-      forceDownload,
-    )
-    .catch(console.log);
-};
-
 const createWindow = async () => {
-  if (isDebug) {
-    await installExtensions();
-  }
-
   dashboardWindow = await createDashboardWindow();
 
   // 等待窗口创建完成后再初始化更新器

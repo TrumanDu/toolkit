@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// Disable no-unused-vars, broken for spread args
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent, shell } from 'electron';
-import FileAPI from './file_api';
+import path from 'path';
+import FileAPI from '../main/file_api';
 
 const appInstallDir = ipcRenderer.sendSync('get-app-install-dir');
 const fileAPI = new FileAPI(appInstallDir);

@@ -17,7 +17,6 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 /* eslint-disable jsx-a11y/anchor-has-content */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { createRoot } from 'react-dom/client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   DeleteOutlined,
@@ -606,6 +605,4 @@ function Dashboard() {
   );
 }
 
-const container = document.getElementById('root') as HTMLElement;
-const root = createRoot(container);
-root.render(<Dashboard />);
+export default Dashboard;

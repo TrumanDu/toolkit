@@ -6,9 +6,11 @@
 /* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
 import path from 'path';
+import { exec } from 'node:child_process';
+import { pathToFileURL } from 'url';
 
 import * as fs from 'fs';
-import { BrowserWindow, shell, session, app } from 'electron';
+import { BrowserWindow, shell, session } from 'electron';
 import log from 'electron-log';
 import Store from 'electron-store';
 import WebContainer from './webContainer';
@@ -132,9 +134,7 @@ class PluginManager {
       height: DEFAULT_WINDOW_HEIGHT,
     }) as { width: number; height: number };
     const ses = session.fromPartition(`persist:<${name}>`);
-    const preloadSystemPath = app.isPackaged
-      ? path.join(__dirname, 'preload.js')
-      : path.join(__dirname, '../../.erb/dll/preload.js');
+    const preloadSystemPath = path.join(__dirname, '../preload/index.js');
     ses.setPreloads([preloadSystemPath]);
 
     const { sort } = this.setting.getSetting();
@@ -203,11 +203,7 @@ class PluginManager {
     } else {
       // pluginWin.loadURL(resolveHtmlPath('plugin.html'));
       pluginWin.loadURL(
-        require('url').format({
-          pathname: path.join(pluginObj.pluginPath, pluginObj.entry),
-          protocol: 'file:',
-          slashes: true,
-        }),
+        pathToFileURL(path.join(pluginObj.pluginPath, pluginObj.entry)).href,
       );
     }
 
@@ -254,7 +250,6 @@ class PluginManager {
     return new Promise((resolve: any) => {
       const module = `${plugin.name}@${plugin.version}`;
       const { name } = plugin;
-      const { exec } = require('node:child_process');
       const cache = path.join(this.baseDir, 'cache');
       exec(
         `npm install --prefix ${cache} ${module}`,
