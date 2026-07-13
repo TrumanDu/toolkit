@@ -7,7 +7,7 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, dialog } from 'electron';
 
 import log from 'electron-log';
 import { getAppDir, getAssetPath } from './util';
@@ -16,6 +16,7 @@ import API from './api';
 import AppUpdater from './app_updater';
 import InitCheck from './init_check';
 import createDashboardWindow from './dashboard';
+import pkg from '../../package.json';
 
 import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
 
@@ -23,14 +24,6 @@ import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 app.name = 'Toolkit';
-
-// macOS: set dock icon early so it doesn't show Electron default
-if (process.platform === 'darwin') {
-  const iconPath = getAssetPath('icon.png');
-  app.whenReady().then(() => {
-    app.dock?.setIcon(iconPath);
-  });
-}
 
 fixPath();
 
@@ -43,6 +36,84 @@ const initCheck = new InitCheck();
 
 baiduAnalyticsMain(ipcMain);
 
+function buildAppMenu() {
+  if (process.platform !== 'darwin') return;
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'Toolkit',
+      submenu: [
+        {
+          label: 'About Toolkit',
+          click: () => {
+            dialog.showMessageBox({
+              type: 'info',
+              title: 'About Toolkit',
+              icon: getAssetPath('icon.png'),
+              message: 'Toolkit',
+              detail: `Version: ${pkg.version}\nAuthor: TrumanDu\n\n极简、插件化的工具集！`,
+            });
+          },
+        },
+        { type: 'separator' },
+        { label: 'Services', submenu: [] },
+        { type: 'separator' },
+        { label: 'Hide Toolkit', accelerator: 'Command+H', role: 'hide' },
+        { label: 'Hide Others', accelerator: 'Command+Shift+H', role: 'hideOthers' },
+        { label: 'Show All', role: 'unhide' },
+        { type: 'separator' },
+        { label: 'Quit Toolkit', accelerator: 'Command+Q', role: 'quit' },
+      ],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { label: 'Undo', accelerator: 'Command+Z', role: 'undo' },
+        { label: 'Redo', accelerator: 'Shift+Command+Z', role: 'redo' },
+        { type: 'separator' },
+        { label: 'Cut', accelerator: 'Command+X', role: 'cut' },
+        { label: 'Copy', accelerator: 'Command+C', role: 'copy' },
+        { label: 'Paste', accelerator: 'Command+V', role: 'paste' },
+        { label: 'Select All', accelerator: 'Command+A', role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: isDebug
+        ? [
+            { label: 'Reload', accelerator: 'Command+R', role: 'reload' },
+            { label: 'Toggle Full Screen', accelerator: 'Ctrl+Command+F', role: 'togglefullscreen' },
+            { label: 'Toggle Developer Tools', accelerator: 'Alt+Command+I', role: 'toggleDevTools' },
+          ]
+        : [
+            { label: 'Toggle Full Screen', accelerator: 'Ctrl+Command+F', role: 'togglefullscreen' },
+          ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { label: 'Minimize', accelerator: 'Command+M', role: 'minimize' },
+        { label: 'Close', accelerator: 'Command+W', role: 'close' },
+        { type: 'separator' },
+        { label: 'Bring All to Front', role: 'front' },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Toolkit on GitHub',
+          click: () => {
+            require('electron').shell.openExternal('https://github.com/TrumanDu/toolkit');
+          },
+        },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 const createWindow = async () => {
   dashboardWindow = await createDashboardWindow();
 
@@ -51,7 +122,6 @@ const createWindow = async () => {
     // 初始化自动更新
     if (dashboardWindow) {
       const appUpdater = new AppUpdater(dashboardWindow);
-      // 由于checkForUpdatesOnStartup是私有方法,改为调用public方法
       appUpdater.checkForUpdates();
     }
   });
@@ -89,6 +159,12 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    // macOS: 构建应用菜单，设置 Dock 图标
+    buildAppMenu();
+    if (process.platform === 'darwin') {
+      app.dock?.setIcon(getAssetPath('icon.png'));
+    }
+
     createWindow();
     // 注册全局快捷键
     if (
@@ -107,8 +183,6 @@ app
       globalShortcut.isRegistered('CmdOrCtrl+Alt+O'),
     );
     app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (dashboardWindow === null) {
         createWindow();
       } else {
@@ -127,7 +201,6 @@ app.on('before-quit', (event) => {
 
 app.on('ready', () => {
   const appInstallDir = getAppDir();
-  // 将应用程序安装目录发送给渲染进程
   ipcMain.on('get-app-install-dir', (event) => {
     event.returnValue = appInstallDir;
   });
