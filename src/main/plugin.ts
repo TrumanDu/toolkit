@@ -14,8 +14,6 @@ import { BrowserWindow, shell, session } from 'electron';
 import log from 'electron-log';
 import Store from 'electron-store';
 import WebContainer from './webContainer';
-
-// import DB from './db';
 import {
   deleteFolder,
   getAppDir,
@@ -166,11 +164,10 @@ class PluginManager {
         backgroundThrottling: true,
         preload: pluginObj.preload ? pluginObj.preloadPath : null,
         webviewTag: true,
-        nodeIntegration: true,
+        nodeIntegration: false,
         navigateOnDragDrop: true,
         experimentalFeatures: true,
         spellcheck: false,
-        enableWebSQL: false,
       },
     });
     pluginWin.on('resize', () => {
@@ -191,7 +188,7 @@ class PluginManager {
           name,
           pluginObj.pluginPath,
         );
-        url = path.join(`http://127.0.0.1:${port}`, pluginObj.entry);
+        url = `http://127.0.0.1:${port}/${pluginObj.entry}`;
       } else {
         url = this.webContainers.get(name) as string;
       }
@@ -246,19 +243,20 @@ class PluginManager {
     return {};
   }
 
-  public async installPlugin(plugin: any): Promise<string> {
-    return new Promise((resolve: any) => {
+  public async installPlugin(plugin: any): Promise<{ code: number; data?: any }> {
+    return new Promise((resolve) => {
       const module = `${plugin.name}@${plugin.version}`;
       const { name } = plugin;
       const cache = path.join(this.baseDir, 'cache');
       exec(
         `npm install --prefix ${cache} ${module}`,
-        (error: any, stdout: any, stderr: any) => {
+        (error: any, _stdout: any, stderr: any) => {
           if (error) {
             log.error('exec error::', error);
             resolve({ code: -1, data: error });
+            return;
           }
-          console.error(`stderr: ${stderr}`);
+          if (stderr) console.error(`stderr: ${stderr}`);
           try {
             const destinationPath = path.join(this.baseDir, name);
             if (fs.existsSync(destinationPath)) {
@@ -271,7 +269,7 @@ class PluginManager {
             console.log('install plugin success!');
             resolve({ code: 0 });
           } catch (err) {
-            log.error('install plugin failed:', error);
+            log.error('install plugin failed:', err);
             resolve({
               code: -1,
               data: 'copy plugin failed! maybe has already existed.',

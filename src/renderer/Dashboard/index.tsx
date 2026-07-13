@@ -66,7 +66,7 @@ function Dashboard() {
   const [selectKey, setSelectKey] = useState(1);
   const [installing, setInstalling] = useState(new Map());
   const [selectPluginName, setSelectPluginName] = useState('');
-  const [setting, SetSetting] = useState(null);
+  const [setting, setSetting] = useState<{ sort: boolean }>({ sort: true });
   const [progressVisible, setProgressVisible] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressStatus, setProgressStatus] = useState({
@@ -154,7 +154,7 @@ function Dashboard() {
     refreshPlugins();
 
     const onListenerMainProcess = () => {
-      window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
+      const offDashboardReply = window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
         if (response.operator === 'installPlugin') {
           const { result } = response;
           const { name } = response.result;
@@ -184,7 +184,7 @@ function Dashboard() {
         'getSetting',
         null,
       );
-      SetSetting(setting);
+      setSetting(setting);
     };
     getAppSetting();
 
@@ -204,12 +204,12 @@ function Dashboard() {
     baiduAnalytics();
 
     // 监听显示进度条窗口
-    window.electron.ipcRenderer.on('show-progress-window', () => {
+    const offShowProgress = window.electron.ipcRenderer.on('show-progress-window', () => {
       setProgressVisible(true);
     });
 
     // 监听更新进度
-    window.electron.ipcRenderer.on('update-progress', (data: any) => {
+    const offUpdateProgress = window.electron.ipcRenderer.on('update-progress', (data: any) => {
       setProgress(Math.floor(data.percent));
       setProgressStatus({
         transferred: data.transferred,
@@ -219,9 +219,16 @@ function Dashboard() {
     });
 
     // 监听关闭进度条窗口
-    window.electron.ipcRenderer.on('close-progress-window', () => {
+    const offCloseProgress = window.electron.ipcRenderer.on('close-progress-window', () => {
       setProgressVisible(false);
     });
+
+    return () => {
+      offDashboardReply();
+      offShowProgress();
+      offUpdateProgress();
+      offCloseProgress();
+    };
   }, []);
 
   const onMenu = (item: any) => {
@@ -244,7 +251,7 @@ function Dashboard() {
   const generatorStoreApp = (result: any) => {
     return result.map((plugin: ToolkitPlugin) => {
       return (
-        <Col md={8} lg={4} key={`${plugin.name}}`}>
+        <Col md={8} lg={4} key={`store-${plugin.name}`}>
           <Card
             title={plugin.pluginName}
             hoverable={hoverable}
@@ -253,7 +260,7 @@ function Dashboard() {
                 ? []
                 : [
                     <Spin
-                      key={`${plugin.name}-spin-${Math.random()}`}
+                      key={`${plugin.name}-spin`}
                       spinning={
                         installing.has(plugin.name) &&
                         installing.get(plugin.name)
@@ -374,7 +381,7 @@ function Dashboard() {
   const renderStorePage = (storePlugins: ToolkitPlugin[]) => {
     const items: TabsProps['items'] = [
       {
-        key: `all-tab${Math.random()}`,
+        key: 'all-tab',
         label: 'ALL',
         children: <Row gutter={[24, 16]}>{generatorStoreApp(result)}</Row>,
       },
@@ -413,9 +420,7 @@ function Dashboard() {
     );
   };
   const onSettingSwitch = (checked: boolean) => {
-    const newSetting = setting;
-    newSetting.sort = checked;
-    SetSetting(newSetting);
+    setSetting({ ...setting, sort: checked });
     try {
       window.electron.ipcRenderer.ipcSend('saveSettingByKey', {
         key: 'sort',

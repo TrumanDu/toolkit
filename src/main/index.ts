@@ -7,7 +7,7 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, protocol } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
@@ -173,7 +173,7 @@ function buildAppMenu() {
         {
           label: 'Toolkit on GitHub',
           click: () => {
-            require('electron').shell.openExternal('https://github.com/TrumanDu/toolkit');
+            shell.openExternal('https://github.com/TrumanDu/toolkit');
           },
         },
       ],

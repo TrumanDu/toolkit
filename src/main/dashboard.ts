@@ -11,12 +11,11 @@ const createDashboardWindow = async () => {
     height: 900,
     icon: getAssetPath('icon.png'),
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       contextIsolation: true,
       webSecurity: false,
       navigateOnDragDrop: true,
       backgroundThrottling: true,
-      enableWebSQL: false,
       spellcheck: false,
       preload: path.join(__dirname, '../preload/index.js'),
     },

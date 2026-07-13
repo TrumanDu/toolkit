@@ -142,7 +142,7 @@
     "productName": "Toolkit",
     "appId": "top.trumandu.Toolkit",
     "asar": true,
-    "asarUnpack": "**\\*.{node,dll}",
+    "asarUnpack": "**/*.{node,dll}",
     "files": [
       "out",
       "node_modules",

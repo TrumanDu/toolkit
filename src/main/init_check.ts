@@ -5,7 +5,6 @@ import axios from 'axios';
 import log from 'electron-log';
 
 import os from 'os';
-import https from 'https';
 
 const APP_STORE_URL = 'https://toolkit.trumandu.top/toolkit-app.json';
 
@@ -54,11 +53,7 @@ export default class InitCheck {
 
   private syncAppStoreConfig() {
     axios
-      .get(APP_STORE_URL, {
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false,
-        }),
-      })
+      .get(APP_STORE_URL)
       .then((response) => {
         const toolkitAppPath = path.join(this.configDir, 'toolkit-app.json');
         let localAppStore = '';

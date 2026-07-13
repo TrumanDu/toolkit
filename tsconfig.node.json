@@ -6,7 +6,6 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "composite": true,
-    "outDir": "./release/app/out",
     "declaration": true,
     "declarationMap": true,
     "noEmit": true,
