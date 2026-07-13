@@ -7,7 +7,7 @@ export default defineConfig({
     plugins: [
       externalizeDepsPlugin({
         // Bundle ESM-only deps that can't be required() in CJS
-        exclude: ['fix-path'],
+        exclude: ['fix-path', 'electron-store', 'conf'],
       }),
     ],
     build: {

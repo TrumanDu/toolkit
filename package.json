@@ -75,9 +75,12 @@
       "node_modules/(?!(react-router|react-router-dom|@remix-run|@ant-design|antd|rc-|@rc-component)/)"
     ],
     "transform": {
-      "\\.(ts|tsx|js|jsx)$": ["ts-jest", {
-        "tsconfig": "tsconfig.web.json"
-      }]
+      "\\.(ts|tsx|js|jsx)$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.web.json"
+        }
+      ]
     }
   },
   "dependencies": {
@@ -86,10 +89,10 @@
     "antd": "^6.5.1",
     "axios": "^1.6.2",
     "electron-debug": "^3.2.0",
-    "electron-log": "^4.4.8",
-    "electron-store": "^8.1.0",
+    "electron-log": "^5.4.4",
+    "electron-store": "^11.0.2",
     "electron-updater": "^6.1.4",
-    "express": "^4.19.2",
+    "express": "^5.2.1",
     "fix-path": "^4.0.0",
     "portfinder": "^1.0.32",
     "react": "^19.2.7",
@@ -129,7 +132,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "prettier": "^3.0.3",
     "rimraf": "^5.0.1",
-    "sass": "^1.83.0",
+    "sass": "^1.101.0",
     "ts-jest": "^29.1.1",
     "typescript": "^5.2.2",
     "vite": "^5.4.2"
