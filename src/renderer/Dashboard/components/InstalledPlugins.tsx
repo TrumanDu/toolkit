@@ -1,23 +1,18 @@
 import { useState } from 'react';
-import type { ToolkitPlugin } from '../../../types/plugin';
-import {
-  DeleteOutlined,
-  SearchOutlined,
-  AppstoreOutlined,
-} from '@ant-design/icons';
+import { DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { Input, Row, Card, Col, Avatar, Popconfirm, Empty } from 'antd';
-import { filterPlugins } from '../utils/filterPlugins';
+import type { ToolkitPlugin } from '../../../types/plugin';
+import filterPlugins from '../utils/filterPlugins';
 
 const { Meta } = Card;
 
 interface Props {
   plugins: ToolkitPlugin[];
-  onRefresh: () => void;
   onOpen: (name: string) => void;
   onRemove: (name: string) => void;
 }
 
-export default function InstalledPlugins({ plugins, onRefresh, onOpen, onRemove }: Props) {
+export default function InstalledPlugins({ plugins, onOpen, onRemove }: Props) {
   const [query, setQuery] = useState('');
   const [hoveredCard, setHoveredCard] = useState('');
   const filtered = filterPlugins(plugins, query);
@@ -57,7 +52,12 @@ export default function InstalledPlugins({ plugins, onRefresh, onOpen, onRemove 
                 }
               >
                 <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onOpen(plugin.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') onOpen(plugin.name);
+                  }}
                   style={{ cursor: 'pointer' }}
                 >
                   <Meta

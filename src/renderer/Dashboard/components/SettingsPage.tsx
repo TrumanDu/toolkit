@@ -1,20 +1,10 @@
-import {
-  CheckOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
-import {
-  Typography,
-  Space,
-  Row,
-  Col,
-  Select,
-  Switch,
-  Button,
-} from 'antd';
+import type { CSSProperties } from 'react';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { Typography, Space, Row, Col, Select, Switch, Button } from 'antd';
 
 const { Title } = Typography;
 
-const settingRowStyle: React.CSSProperties = {
+const settingRowStyle: CSSProperties = {
   width: '100%',
   backgroundColor: '#fafafa',
   minHeight: 80,

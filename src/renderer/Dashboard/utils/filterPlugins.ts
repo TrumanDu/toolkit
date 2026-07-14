@@ -5,7 +5,10 @@ import type { ToolkitPlugin } from '../../../types/plugin';
  * Supports exact prefix match and substring match.
  * Special commands: ':all' or ':' prefix shows all plugins.
  */
-export function filterPlugins(plugins: ToolkitPlugin[], query: string): ToolkitPlugin[] {
+export default function filterPlugins(
+  plugins: ToolkitPlugin[],
+  query: string,
+): ToolkitPlugin[] {
   const value = query.toLowerCase().trim();
 
   if (value === '' || value === ':all' || value.startsWith(':')) {

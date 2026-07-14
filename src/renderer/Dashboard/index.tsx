@@ -12,7 +12,6 @@ import StorePlugins from './components/StorePlugins';
 import SettingsPage from './components/SettingsPage';
 import type { ToolkitPlugin } from '../../types/plugin';
 import { MenuTab } from './constants';
-import { filterPlugins } from './utils/filterPlugins';
 
 const { Sider, Content, Footer } = Layout;
 
@@ -38,34 +37,46 @@ function Dashboard() {
     bytesPerSecond: 0,
   });
 
-  const { token: { colorBgContainer } } = theme.useToken();
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
 
   // ── Data loading ─────────────────────────────────────────────────────────
 
   const loadPlugins = useCallback(() => {
-    const plugins = window.electron.ipcRenderer.ipcSendSync('listPlugins', null);
+    const plugins = window.electron.ipcRenderer.ipcSendSync(
+      'listPlugins',
+      null,
+    );
     setAllPlugins(plugins || []);
   }, []);
 
   const loadStorePlugins = useCallback(() => {
-    const store = window.electron.ipcRenderer.ipcSendSync('getStoreAppList', null);
-    const installed = window.electron.ipcRenderer.ipcSendSync('listPlugins', null);
+    const store = window.electron.ipcRenderer.ipcSendSync(
+      'getStoreAppList',
+      null,
+    );
+    const installed = window.electron.ipcRenderer.ipcSendSync(
+      'listPlugins',
+      null,
+    );
     setStorePlugins(store || {});
 
     // Build enriched result for ALL tab
-    const installedMap = new Map<string, ToolkitPlugin>((installed || []).map((p: ToolkitPlugin) => [p.name, p]));
-    const result: any[] = [];
-    for (const [category, plugins] of Object.entries(store || {})) {
-      for (const obj of plugins as any[]) {
+    const installedMap = new Map<string, ToolkitPlugin>(
+      (installed || []).map((p: ToolkitPlugin) => [p.name, p]),
+    );
+    const result = Object.entries(store || {}).flatMap(([category, plugins]) =>
+      (plugins as any[]).map((obj) => {
         const installedPlugin = installedMap.get(obj.name);
-        result.push({
+        return {
           ...obj,
           category,
           installed: !!installedPlugin,
           installVersion: installedPlugin?.version ?? '',
-        });
-      }
-    }
+        };
+      }),
+    );
     setStoreResult(result);
   }, []);
 
@@ -78,55 +89,71 @@ function Dashboard() {
     if (setting) setSettings(setting);
 
     try {
-      baiduAnalyticsRenderer('077ebf5af4b96181076eefc3db60ad2c', (_hmt: string[][]) => {
-        _hmt.push(['_trackPageview', '/']);
-      });
+      baiduAnalyticsRenderer(
+        '077ebf5af4b96181076eefc3db60ad2c',
+        (_hmt: string[][]) => {
+          _hmt.push(['_trackPageview', '/']);
+        },
+      );
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error(e);
     }
   }, [loadPlugins]);
 
   useEffect(() => {
-    const offReply = window.electron.ipcRenderer.on('dashboard-reply', (response: any) => {
-      if (response.operator !== 'installPlugin') return;
-      const { result, name } = response;
+    const offReply = window.electron.ipcRenderer.on(
+      'dashboard-reply',
+      (response: any) => {
+        if (response.operator !== 'installPlugin') return;
+        const { result, name } = response;
 
-      setInstalling((prev) => {
-        const next = new Map(prev);
-        next.delete(name);
-        return next;
-      });
-
-      if (!result || result.code < 0) {
-        notification.error({
-          message: `Install ${name} failed!`,
-          description: result ? JSON.stringify(result.data) : '',
+        setInstalling((prev) => {
+          const next = new Map(prev);
+          next.delete(name);
+          return next;
         });
-      } else {
-        notification.success({
-          message: 'Install plugin succeed!',
-          description: `plugin name: ${name}`,
+
+        if (!result || result.code < 0) {
+          notification.error({
+            message: `Install ${name} failed!`,
+            description: result ? JSON.stringify(result.data) : '',
+          });
+        } else {
+          notification.success({
+            message: 'Install plugin succeed!',
+            description: `plugin name: ${name}`,
+          });
+          loadStorePlugins();
+        }
+      },
+    );
+
+    const offShow = window.electron.ipcRenderer.on(
+      'show-progress-window',
+      () => {
+        setProgressVisible(true);
+      },
+    );
+
+    const offProgress = window.electron.ipcRenderer.on(
+      'update-progress',
+      (data: any) => {
+        setProgress(Math.floor(data.percent));
+        setProgressStatus({
+          transferred: data.transferred,
+          total: data.total,
+          bytesPerSecond: data.bytesPerSecond,
         });
-        loadStorePlugins();
-      }
-    });
+      },
+    );
 
-    const offShow = window.electron.ipcRenderer.on('show-progress-window', () => {
-      setProgressVisible(true);
-    });
-
-    const offProgress = window.electron.ipcRenderer.on('update-progress', (data: any) => {
-      setProgress(Math.floor(data.percent));
-      setProgressStatus({
-        transferred: data.transferred,
-        total: data.total,
-        bytesPerSecond: data.bytesPerSecond,
-      });
-    });
-
-    const offClose = window.electron.ipcRenderer.on('close-progress-window', () => {
-      setProgressVisible(false);
-    });
+    const offClose = window.electron.ipcRenderer.on(
+      'close-progress-window',
+      () => {
+        setProgressVisible(false);
+      },
+    );
 
     return () => {
       offReply();
@@ -149,12 +176,16 @@ function Dashboard() {
     try {
       window.electron.ipcRenderer.ipcSendSync('openPlugin', name);
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error(e);
     }
   };
 
   const handleRemovePlugin = (name: string) => {
-    const plugins = window.electron.ipcRenderer.ipcSendSync('removePlugin', name);
+    const plugins = window.electron.ipcRenderer.ipcSendSync(
+      'removePlugin',
+      name,
+    );
     setAllPlugins(plugins || []);
   };
 
@@ -175,11 +206,7 @@ function Dashboard() {
 
   return (
     <Layout style={{ minHeight: '97vh' }}>
-      <Sider
-        collapsed={collapsed}
-        onCollapse={setCollapsed}
-        theme="light"
-      >
+      <Sider collapsed={collapsed} onCollapse={setCollapsed} theme="light">
         <div
           style={{
             display: 'flex',
@@ -195,8 +222,16 @@ function Dashboard() {
             defaultSelectedKeys={[`${MenuTab.Installed}`]}
             onClick={handleMenu}
             items={[
-              { key: `${MenuTab.Installed}`, icon: <AppstoreOutlined />, label: '已安装工具' },
-              { key: `${MenuTab.Store}`, icon: <ShopOutlined />, label: 'APP市场' },
+              {
+                key: `${MenuTab.Installed}`,
+                icon: <AppstoreOutlined />,
+                label: '已安装工具',
+              },
+              {
+                key: `${MenuTab.Store}`,
+                icon: <ShopOutlined />,
+                label: 'APP市场',
+              },
             ]}
           />
           <Menu
@@ -205,7 +240,11 @@ function Dashboard() {
             onClick={handleMenu}
             selectedKeys={[`${selectKey}`]}
             items={[
-              { key: `${MenuTab.Settings}`, icon: <SettingOutlined />, label: '设置' },
+              {
+                key: `${MenuTab.Settings}`,
+                icon: <SettingOutlined />,
+                label: '设置',
+              },
             ]}
           />
         </div>
@@ -222,7 +261,6 @@ function Dashboard() {
           {selectKey === MenuTab.Installed && (
             <InstalledPlugins
               plugins={allPlugins}
-              onRefresh={loadPlugins}
               onOpen={handleOpenPlugin}
               onRemove={handleRemovePlugin}
             />

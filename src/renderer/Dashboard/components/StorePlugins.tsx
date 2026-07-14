@@ -1,7 +1,7 @@
-import type { ToolkitPlugin } from '../../../types/plugin';
 import { CloudDownloadOutlined } from '@ant-design/icons';
-import { Row, Card, Col, Avatar, Tabs, Spin, notification, Empty } from 'antd';
+import { Row, Card, Col, Avatar, Tabs, Spin, Empty } from 'antd';
 import type { TabsProps } from 'antd';
+import type { ToolkitPlugin } from '../../../types/plugin';
 
 const { Meta } = Card;
 
@@ -19,7 +19,13 @@ interface Props {
   onInstall: (plugin: StorePlugin) => void;
 }
 
-export default function StorePlugins({ storePlugins, installedPlugins, result, installing, onInstall }: Props) {
+export default function StorePlugins({
+  storePlugins,
+  installedPlugins,
+  result,
+  installing,
+  onInstall,
+}: Props) {
   const installedMap = new Map(installedPlugins.map((p) => [p.name, p]));
 
   const enrichPlugin = (obj: any, category: string): StorePlugin => ({
@@ -34,7 +40,8 @@ export default function StorePlugins({ storePlugins, installedPlugins, result, i
     return (
       <Row gutter={[24, 16]}>
         {plugins.map((plugin) => {
-          const isInstalled = plugin.installed && plugin.version === plugin.installVersion;
+          const isInstalled =
+            plugin.installed && plugin.version === plugin.installVersion;
           return (
             <Col md={8} lg={4} key={`store-${plugin.name}`}>
               <Card

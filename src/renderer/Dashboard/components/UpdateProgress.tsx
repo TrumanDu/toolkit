@@ -18,9 +18,7 @@ function UpdateProgress({ visible, progress, status }: UpdateProgressProps) {
         已下载: {(status.transferred / 1024 / 1024).toFixed(2)} MB / 总大小:{' '}
         {(status.total / 1024 / 1024).toFixed(2)} MB
         <br />
-        下载速度: {(status.bytesPerSecond / 1024 / 1024).toFixed(
-          2,
-        )} MB/s
+        下载速度: {(status.bytesPerSecond / 1024 / 1024).toFixed(2)} MB/s
       </div>
     </Modal>
   );
