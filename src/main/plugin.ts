@@ -23,6 +23,30 @@ import {
 import Setting from './setting';
 import InitCheck from './init_check';
 
+/**
+ * Read an image file and return a base64 data URI.
+ * Falls back to the app icon if the file cannot be read.
+ */
+function imageToDataUri(filePath: string): string {
+  try {
+    const buf = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+    const mime: Record<string, string> = {
+      '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+      '.gif': 'image/gif', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+      '.webp': 'image/webp',
+    };
+    return `data:${mime[ext] || 'image/png'};base64,${buf.toString('base64')}`;
+  } catch {
+    try {
+      const iconBuf = fs.readFileSync(getAssetPath('icon.png'));
+      return `data:image/png;base64,${iconBuf.toString('base64')}`;
+    } catch {
+      return '';
+    }
+  }
+}
+
 const DEFAULT_WINDOW_WIDTH = 1200;
 const DEFAULT_WINDOW_HEIGHT = 770;
 
@@ -68,9 +92,9 @@ class PluginManager {
           pluginObj.version = packageObj.version;
         }
         if (pluginObj.logo) {
-          pluginObj.logoPath = `toolkit-file:///${path.join(pluginPath, pluginObj.logo)}`;
+          pluginObj.logoPath = imageToDataUri(path.join(pluginPath, pluginObj.logo));
         } else {
-          pluginObj.logoPath = `toolkit-file:///${getAssetPath('icon.png')}`;
+          pluginObj.logoPath = imageToDataUri(getAssetPath('icon.png'));
         }
 
         pluginObj.pluginPath = pluginPath;

@@ -7,7 +7,7 @@
  * through IPC.
  */
 import fixPath from 'fix-path';
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell, protocol } from 'electron';
+import { app, BrowserWindow, globalShortcut, ipcMain, Menu, shell } from 'electron';
 import fs from 'fs';
 import path from 'path';
 
@@ -26,14 +26,6 @@ import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
 app.setAppUserModelId('top.trumandu.Toolkit');
 app.name = 'Toolkit';
-
-// 注册自定义协议（必须在 app.whenReady 之前）
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'toolkit-file',
-    privileges: { standard: true, supportFetchAPI: true, bypassCSP: true, secure: true },
-  },
-]);
 
 fixPath();
 
@@ -228,30 +220,6 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
-    // 注册 toolkit-file 协议处理器，用于加载本地图片等资源
-    protocol.handle('toolkit-file', (request) => {
-      const filePath = decodeURIComponent(request.url.slice('toolkit-file:///'.length));
-      try {
-        const data = fs.readFileSync(filePath);
-        const ext = path.extname(filePath).toLowerCase();
-        const mimeMap: Record<string, string> = {
-          '.png': 'image/png',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg',
-          '.gif': 'image/gif',
-          '.svg': 'image/svg+xml',
-          '.ico': 'image/x-icon',
-          '.webp': 'image/webp',
-        };
-        const contentType = mimeMap[ext] || 'application/octet-stream';
-        return new Response(data, {
-          headers: { 'Content-Type': contentType },
-        });
-      } catch (e) {
-        return new Response('Not Found', { status: 404 });
-      }
-    });
-
     // macOS: 构建应用菜单，设置 Dock 图标
     buildAppMenu();
     if (process.platform === 'darwin') {
