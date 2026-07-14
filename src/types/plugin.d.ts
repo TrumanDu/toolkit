@@ -10,8 +10,14 @@ interface ToolkitPlugin {
   mode?: string;
   author?: string;
   homepage?: string;
-  keywords: string[];
+  keywords?: string[];
   category?: string;
   installed?: boolean;
   installVersion?: string;
+  pluginPath?: string;
+  preload?: string;
+  preloadPath?: string;
+  webContainer?: boolean;
 }
+
+export type { ToolkitPlugin };

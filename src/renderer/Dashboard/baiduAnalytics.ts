@@ -7,7 +7,7 @@ const baiduAnalyticsRenderer = (siteId: string, initCallback: any) => {
   // 添加默认行为避免报错
   window._hmt = window._hmt || [];
 
-  window.electron.ipcRenderer.on('baidu-analytics-electron-reply', (args) => {
+  window.electron.ipcRenderer.on('baidu-analytics-electron-reply', (args: any) => {
     const { text } = args;
     window._hmt = window._hmt || [];
 
