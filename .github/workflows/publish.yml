@@ -39,7 +39,6 @@ jobs:
 
       - name: Package (no publish)
         env:
-          # 部分签名/公证脚本可能读取；此处不上传 Release
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm exec electron-builder -- --publish never --${{ matrix.platform }}
 

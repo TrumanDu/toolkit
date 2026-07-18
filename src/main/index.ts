@@ -182,9 +182,8 @@ function buildAppMenu() {
 const createWindow = async () => {
   dashboardWindow = await createDashboardWindow();
 
-  // 等待窗口创建完成后再初始化更新器
-  dashboardWindow.webContents.on('did-finish-load', () => {
-    // 初始化自动更新
+  // 仅首次加载后检查更新，避免重复绑定 autoUpdater 监听导致多次弹窗
+  dashboardWindow.webContents.once('did-finish-load', () => {
     if (dashboardWindow) {
       const appUpdater = new AppUpdater(dashboardWindow);
       appUpdater.checkForUpdates();

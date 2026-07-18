@@ -14,21 +14,29 @@ exports.default = async function notarizeMacos(context) {
     return;
   }
 
-  if (!(
-    'APPLE_ID' in process.env && 'APPLE_APP_SPECIFIC_PASSWORD' in process.env
-  )) {
+  const appleId = process.env.APPLE_ID;
+  const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD;
+  const teamId = process.env.APPLE_TEAM_ID;
+
+  if (!appleId || !appleIdPassword) {
     process.stderr.write(
-      'Skipping notarizing step. APPLE_ID and APPLE_APP_SPECIFIC_PASSWORD env variables must be set\n',
+      'Skipping notarizing step. APPLE_ID and APPLE_APP_SPECIFIC_PASSWORD must be set\n',
     );
     return;
   }
 
   const appName = context.packager.appInfo.productFilename;
-
-  await notarize({
+  const notarizeOptions = {
     appBundleId: build.appId,
     appPath: `${appOutDir}/${appName}.app`,
-    appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
-  });
+    appleId,
+    appleIdPassword,
+  };
+
+  // 新版 notarytool 推荐带上 teamId
+  if (teamId) {
+    notarizeOptions.teamId = teamId;
+  }
+
+  await notarize(notarizeOptions);
 };

@@ -7,6 +7,7 @@ import {
 import { Layout, Menu, theme, notification } from 'antd';
 import baiduAnalyticsRenderer from './baiduAnalytics';
 import UpdateProgress from './components/UpdateProgress';
+import UpdateAvailable from './components/UpdateAvailable';
 import InstalledPlugins from './components/InstalledPlugins';
 import StorePlugins from './components/StorePlugins';
 import SettingsPage from './components/SettingsPage';
@@ -27,6 +28,12 @@ function Dashboard() {
 
   // Settings
   const [settings, setSettings] = useState<{ sort: boolean }>({ sort: true });
+
+  // Update prompt (HTML release notes)
+  const [updateAvailableVisible, setUpdateAvailableVisible] = useState(false);
+  const [updateVersion, setUpdateVersion] = useState('');
+  const [updateReleaseNotesHtml, setUpdateReleaseNotesHtml] = useState('');
+  const [updateAcceptText, setUpdateAcceptText] = useState('现在更新');
 
   // Update progress
   const [progressVisible, setProgressVisible] = useState(false);
@@ -129,6 +136,33 @@ function Dashboard() {
       },
     );
 
+    const offUpdateAvailable = window.electron.ipcRenderer.on(
+      'show-update-available',
+      (data: {
+        version: string;
+        releaseNotesHtml: string;
+        acceptText?: string;
+      }) => {
+        setUpdateVersion(data?.version || '');
+        setUpdateReleaseNotesHtml(data?.releaseNotesHtml || '');
+        setUpdateAcceptText(data?.acceptText || '现在更新');
+        setUpdateAvailableVisible(true);
+      },
+    );
+
+    const offUpdateCheckError = window.electron.ipcRenderer.on(
+      'update-check-error',
+      (data: { message?: string }) => {
+        notification.warning({
+          message: '检查更新失败',
+          description:
+            data?.message ||
+            '请稍后重试，或前往 GitHub Release 手动下载新版本',
+          duration: 8,
+        });
+      },
+    );
+
     const offShow = window.electron.ipcRenderer.on(
       'show-progress-window',
       () => {
@@ -152,16 +186,32 @@ function Dashboard() {
       'close-progress-window',
       () => {
         setProgressVisible(false);
+        setProgress(0);
+        setProgressStatus({
+          transferred: 0,
+          total: 0,
+          bytesPerSecond: 0,
+        });
       },
     );
 
     return () => {
       offReply();
+      offUpdateAvailable();
+      offUpdateCheckError();
       offShow();
       offProgress();
       offClose();
     };
   }, [loadStorePlugins]);
+
+  const respondUpdateAvailable = (accepted: boolean) => {
+    setUpdateAvailableVisible(false);
+    window.electron.ipcRenderer.sendMessage(
+      'update-available-response',
+      accepted,
+    );
+  };
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -292,6 +342,14 @@ function Dashboard() {
           <a href="https://www.trumandu.top">TrumanDu</a>
         </Footer>
       </Layout>
+      <UpdateAvailable
+        visible={updateAvailableVisible}
+        version={updateVersion}
+        releaseNotesHtml={updateReleaseNotesHtml}
+        acceptText={updateAcceptText}
+        onAccept={() => respondUpdateAvailable(true)}
+        onDecline={() => respondUpdateAvailable(false)}
+      />
       <UpdateProgress
         visible={progressVisible}
         progress={progress}

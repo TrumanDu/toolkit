@@ -1,6 +1,6 @@
 {
   "name": "Toolkit",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",
@@ -148,9 +148,10 @@
       "node_modules",
       "package.json"
     ],
+    "afterSign": "scripts/notarize.js",
     "mac": {
-      "sign": "scripts/notarize.js",
       "notarize": false,
+      "identity": null,
       "target": {
         "target": "default",
         "arch": [
