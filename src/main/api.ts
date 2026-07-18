@@ -9,6 +9,8 @@ const ALLOWED_METHODS = new Set([
   'listPlugins',
   'reloadPlugins',
   'openPlugin',
+  'preparePlugin',
+  'cancelPreparePlugin',
   'removePlugin',
   'getStoreAppList',
   'installPlugin',
@@ -21,8 +23,6 @@ class API {
 
   private pluginManager: PluginManager;
 
-  private pluginViewPool: Map<string, BrowserWindow> = new Map();
-
   private dashboardWindow: BrowserWindow;
 
   constructor(dashboardWindow: BrowserWindow, initCheck: InitCheck) {
@@ -32,21 +32,24 @@ class API {
   }
 
   public listen() {
-    ipcMain.on('trigger', async (event: IpcMainEvent, arg: { type: string; data: any }) => {
-      const method = arg.type;
-      console.log('IPC trigger:', method);
-      if (!ALLOWED_METHODS.has(method)) {
-        log.error(`IPC: unknown method "${method}"`);
-        event.returnValue = undefined;
-        return;
-      }
-      try {
-        const data = await (this as any)[method](arg, event);
-        event.returnValue = data;
-      } catch (error) {
-        log.error(error);
-      }
-    });
+    ipcMain.on(
+      'trigger',
+      async (event: IpcMainEvent, arg: { type: string; data: any }) => {
+        const method = arg.type;
+        console.log('IPC trigger:', method);
+        if (!ALLOWED_METHODS.has(method)) {
+          log.error(`IPC: unknown method "${method}"`);
+          event.returnValue = undefined;
+          return;
+        }
+        try {
+          const data = await (this as any)[method](arg, event);
+          event.returnValue = data;
+        } catch (error) {
+          log.error(error);
+        }
+      },
+    );
   }
 
   public listPlugins() {
@@ -59,21 +62,21 @@ class API {
 
   public async openPlugin(arg: { data: string }) {
     const pluginObj = this.pluginManager.getPlugin(arg.data);
-    if (pluginObj.mode && pluginObj.mode === 'single') {
-      const name = arg.data;
-      if (!this.pluginViewPool.has(name)) {
-        const pluginWin = await this.pluginManager.openPlugin(
-          name,
-          this.pluginViewPool,
-        );
-        this.pluginViewPool.set(name, pluginWin);
-      } else {
-        const pluginWin = this.pluginViewPool.get(name);
-        pluginWin?.show();
-      }
-    } else {
-      await this.pluginManager.openPlugin(arg.data, this.pluginViewPool);
+    if (!pluginObj) {
+      log.error(`openPlugin: plugin not found "${arg.data}"`);
+      return;
     }
+    await this.pluginManager.openPlugin(arg.data);
+  }
+
+  public preparePlugin(arg: { data: string }) {
+    if (!arg?.data) return;
+    this.pluginManager.preparePlugin(arg.data);
+  }
+
+  public cancelPreparePlugin(arg: { data: string }) {
+    if (!arg?.data) return;
+    this.pluginManager.cancelPreparePlugin(arg.data);
   }
 
   public removePlugin(arg: { data: string }) {
@@ -104,6 +107,15 @@ class API {
   public saveSettingByKey(arg: { data: { key: string; value: any } }) {
     const { data } = arg;
     this.setting.updateByKey(data.key, data.value);
+  }
+
+  public notification(title: string, body: string) {
+    const notification = new Notification({ title, body });
+    notification.show();
+  }
+
+  public dispose() {
+    this.pluginManager.destroyAllViews();
   }
 }
 

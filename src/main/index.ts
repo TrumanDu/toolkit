@@ -24,12 +24,16 @@ import { baiduAnalyticsMain } from '@nostar/baidu-analytics-electron';
 
 // IMPORTANT: to fix file save problem in excalidraw
 app.commandLine.appendSwitch('enable-experimental-web-platform-features');
+// 预加载隐藏插件窗时保持渲染，避免 ready-to-show 被节流拖慢
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 app.setAppUserModelId('top.trumandu.Toolkit');
 app.name = 'Toolkit';
 
 fixPath();
 
 let dashboardWindow: BrowserWindow | null = null;
+let api: API | null = null;
 
 const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
@@ -187,7 +191,7 @@ const createWindow = async () => {
     }
   });
 
-  const api = new API(dashboardWindow, initCheck);
+  api = new API(dashboardWindow, initCheck);
   api.listen();
   // 创建系统托盘图标
   createTray(dashboardWindow, api);
@@ -199,6 +203,8 @@ const createWindow = async () => {
 
 // 添加内存清理函数
 function cleanupResources() {
+  api?.dispose();
+  api = null;
   if (dashboardWindow) {
     dashboardWindow.webContents.closeDevTools();
     dashboardWindow = null;

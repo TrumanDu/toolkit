@@ -9,10 +9,18 @@ const { Meta } = Card;
 interface Props {
   plugins: ToolkitPlugin[];
   onOpen: (name: string) => void;
+  onPrepare: (name: string) => void;
+  onCancelPrepare: (name: string) => void;
   onRemove: (name: string) => void;
 }
 
-export default function InstalledPlugins({ plugins, onOpen, onRemove }: Props) {
+export default function InstalledPlugins({
+  plugins,
+  onOpen,
+  onPrepare,
+  onCancelPrepare,
+  onRemove,
+}: Props) {
   const [query, setQuery] = useState('');
   const [hoveredCard, setHoveredCard] = useState('');
   const filtered = filterPlugins(plugins, query);
@@ -35,8 +43,14 @@ export default function InstalledPlugins({ plugins, onOpen, onRemove }: Props) {
               <Card
                 title={plugin.pluginName}
                 hoverable
-                onMouseEnter={() => setHoveredCard(plugin.name)}
-                onMouseLeave={() => setHoveredCard('')}
+                onMouseEnter={() => {
+                  setHoveredCard(plugin.name);
+                  onPrepare(plugin.name);
+                }}
+                onMouseLeave={() => {
+                  setHoveredCard('');
+                  onCancelPrepare(plugin.name);
+                }}
                 extra={
                   hoveredCard === plugin.name ? (
                     <Popconfirm

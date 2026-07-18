@@ -1,6 +1,6 @@
 {
   "name": "Toolkit",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A toolkit for scalable desktop apps",
   "keywords": [
     "electron",
@@ -202,7 +202,7 @@
     "publish": {
       "provider": "github",
       "owner": "TrumanDu",
-      "releaseType":"release",
+      "releaseType": "release",
       "repo": "toolkit"
     }
   },

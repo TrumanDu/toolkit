@@ -3,10 +3,11 @@ import { execFile } from 'node:child_process';
 import { pathToFileURL } from 'url';
 
 import * as fs from 'fs';
-import { BrowserWindow, shell, session } from 'electron';
+import { session, Session } from 'electron';
 import log from 'electron-log';
 import Store from 'electron-store';
 import WebContainer from './webContainer';
+import PluginViewHost from './plugin_view_host';
 import {
   deleteFolder,
   getAppDir,
@@ -19,8 +20,6 @@ import type { ToolkitPlugin } from '../types/plugin';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DEFAULT_WINDOW_WIDTH = 1200;
-const DEFAULT_WINDOW_HEIGHT = 770;
 const SORT_SETTING_KEY = 'sortSettingId';
 
 const IMAGE_MIME: Record<string, string> = {
@@ -66,7 +65,14 @@ class PluginManager {
 
   private baseDir: string;
 
-  private configDir: string = path.join(getAppDir(), 'config');
+  private configDir: string;
+
+  private appDir: string = getAppDir();
+
+  private systemPreloadPath: string = path.join(
+    __dirname,
+    '../preload/index.js',
+  );
 
   private container: WebContainer = new WebContainer();
 
@@ -74,13 +80,46 @@ class PluginManager {
 
   private webContainers: Map<string, string> = new Map();
 
+  private preparedSessions: Set<string> = new Set();
+
+  private iconPathCache: Map<string, string> = new Map();
+
   private store = new Store();
+
+  private viewHost: PluginViewHost;
 
   constructor(initCheck: InitCheck, setting: Setting) {
     this.setting = setting;
     this.baseDir = initCheck.pluginDir;
     this.configDir = initCheck.configDir;
     this.allPlugins = this.listPlugin();
+
+    this.viewHost = new PluginViewHost({
+      getPlugin: (name) => this.getPlugin(name),
+      resolvePluginUrl: (name, plugin) => this.resolvePluginUrl(name, plugin),
+      ensureSession: (name) => this.ensurePluginSession(name),
+      getAppDir: () => this.appDir,
+      getIconPath: (plugin) => this.resolveWindowIcon(plugin),
+      onViewDestroyed: (name) => this.onPluginViewDestroyed(name),
+    });
+
+    // 空闲预热 persist session（轻量，不建窗）
+    setImmediate(() => this.warmPluginSessions());
+  }
+
+  public warmPluginSessions() {
+    for (const plugin of this.allPlugins) {
+      this.ensurePluginSession(plugin.name);
+    }
+  }
+
+  private ensurePluginSession(name: string): Session {
+    const ses = session.fromPartition(`persist:<${name}>`);
+    if (!this.preparedSessions.has(name)) {
+      ses.setPreloads([this.systemPreloadPath]);
+      this.preparedSessions.add(name);
+    }
+    return ses;
   }
 
   // ── Plugin listing ───────────────────────────────────────────────────────
@@ -106,7 +145,10 @@ class PluginManager {
     if (!fs.existsSync(packagePath)) return null;
 
     const packageJsonPath = path.join(pluginPath, 'package.json');
-    const packageObj = readJsonObjFromFile(packageJsonPath) as Record<string, any>;
+    const packageObj = readJsonObjFromFile(packageJsonPath) as Record<
+      string,
+      any
+    >;
     const pluginObj = readJsonObjFromFile(packagePath) as Record<string, any>;
 
     if (packageObj) {
@@ -144,9 +186,12 @@ class PluginManager {
 
   public reloadPlugins() {
     this.listPlugin();
+    setImmediate(() => this.warmPluginSessions());
   }
 
   public removePlugin(name: string) {
+    this.viewHost.destroyView(name);
+
     try {
       const pluginPath = path.join(this.baseDir, name);
       if (fs.existsSync(pluginPath)) {
@@ -162,23 +207,32 @@ class PluginManager {
     return this.allPlugins.find((p) => p.name === name);
   }
 
-  // ── Open plugin ──────────────────────────────────────────────────────────
+  /** 在单壳 / 回收池策略下打开插件 */
+  public async openPlugin(name: string): Promise<void> {
+    setImmediate(() => this.trackPluginUsage(name));
+    await this.viewHost.activate(name);
+  }
 
-  public async openPlugin(
-    name: string,
-    pluginViewPool: Map<string, BrowserWindow>,
-  ): Promise<BrowserWindow> {
-    const pluginObj = this.getPlugin(name)!;
+  /** 悬停预热：预建 View / 隐藏窗，点击时可秒开 */
+  public preparePlugin(name: string) {
+    this.viewHost.prepare(name);
+  }
 
-    this.trackPluginUsage(name);
+  /** 鼠标移出：终止预热并销毁预热实例 */
+  public cancelPreparePlugin(name: string) {
+    this.viewHost.cancelPrepare(name);
+  }
 
-    const pluginWin = this.createPluginWindow(name, pluginObj);
-    this.setupWindowHandlers(pluginWin, pluginObj, pluginViewPool, name);
+  public destroyAllViews() {
+    this.viewHost.destroyAll();
+  }
 
-    const url = await this.resolvePluginUrl(name, pluginObj);
-    pluginWin.loadURL(url);
-
-    return pluginWin;
+  private onPluginViewDestroyed(name: string) {
+    if (this.webContainers.has(name)) {
+      this.webContainers.delete(name);
+      this.container.closePlugin(name);
+    }
+    if (global.gc) global.gc();
   }
 
   private trackPluginUsage(name: string) {
@@ -191,91 +245,43 @@ class PluginManager {
     saveSortData(this.store, sortData);
   }
 
-  private createPluginWindow(name: string, pluginObj: ToolkitPlugin): BrowserWindow {
-    const storeId = `${name}-windowSize`;
-    const savedSize = this.store.get(storeId, {
-      width: DEFAULT_WINDOW_WIDTH,
-      height: DEFAULT_WINDOW_HEIGHT,
-    }) as { width: number; height: number };
+  private resolveWindowIcon(pluginObj: ToolkitPlugin): string {
+    const cacheKey = pluginObj.name;
+    const cached = this.iconPathCache.get(cacheKey);
+    if (cached) return cached;
 
-    const ses = session.fromPartition(`persist:<${name}>`);
-    ses.setPreloads([path.join(__dirname, '../preload/index.js')]);
-
-    const pluginWin = new BrowserWindow({
-      height: savedSize.height,
-      width: savedSize.width,
-      title: pluginObj.name,
-      show: false,
-      icon: pluginObj.logoPath,
-      autoHideMenuBar: true,
-      enableLargerThanScreen: true,
-      webPreferences: {
-        webSecurity: false,
-        contextIsolation: true,
-        session: ses,
-        backgroundThrottling: true,
-        preload: pluginObj.preload ? pluginObj.preloadPath : null,
-        webviewTag: true,
-        nodeIntegration: true,
-        navigateOnDragDrop: true,
-        experimentalFeatures: true,
-        spellcheck: false,
-      },
-    });
-
-    pluginWin.on('resize', () => {
-      const [width, height] = pluginWin.getSize();
-      this.store.set(storeId, { width, height });
-    });
-
-    return pluginWin;
+    let iconPath = getAssetPath('icon.png');
+    if (pluginObj.logo && pluginObj.pluginPath) {
+      const logoFile = path.join(pluginObj.pluginPath, pluginObj.logo);
+      if (fs.existsSync(logoFile)) iconPath = logoFile;
+    }
+    this.iconPathCache.set(cacheKey, iconPath);
+    return iconPath;
   }
 
-  private setupWindowHandlers(
-    pluginWin: BrowserWindow,
-    pluginObj: ToolkitPlugin,
-    pluginViewPool: Map<string, BrowserWindow>,
+  private async resolvePluginUrl(
     name: string,
-  ) {
-    pluginWin.webContents.setWindowOpenHandler((data) => {
-      shell.openExternal(data.url);
-      return { action: 'deny' };
-    });
-
-    pluginWin.webContents.on('will-navigate', (event, url) => {
-      if (!url.startsWith('file://')) {
-        event.preventDefault();
-        shell.openExternal(url);
-      }
-    });
-
-    pluginWin.once('ready-to-show', () => {
-      pluginWin.show();
-    });
-
-    pluginWin.on('closed', () => {
-      if (pluginObj.webContainer) {
-        this.webContainers.delete(name);
-        this.container.closePlugin(name);
-      }
-      pluginViewPool.delete(name);
-      if (global.gc) global.gc();
-    });
-  }
-
-  private async resolvePluginUrl(name: string, pluginObj: ToolkitPlugin): Promise<string> {
+    pluginObj: ToolkitPlugin,
+  ): Promise<string> {
     if (pluginObj.webContainer) {
       return this.resolveWebContainerUrl(name, pluginObj);
     }
     if (pluginObj.entry?.startsWith('http')) {
       return pluginObj.entry;
     }
-    return pathToFileURL(path.join(pluginObj.pluginPath!, pluginObj.entry)).href;
+    return pathToFileURL(path.join(pluginObj.pluginPath!, pluginObj.entry))
+      .href;
   }
 
-  private async resolveWebContainerUrl(name: string, pluginObj: ToolkitPlugin): Promise<string> {
+  private async resolveWebContainerUrl(
+    name: string,
+    pluginObj: ToolkitPlugin,
+  ): Promise<string> {
     if (!this.webContainers.has(name)) {
-      const port = await this.container.listenPlugin(name, pluginObj.pluginPath!);
+      const port = await this.container.listenPlugin(
+        name,
+        pluginObj.pluginPath!,
+      );
       const url = `http://127.0.0.1:${port}/${pluginObj.entry}`;
       this.webContainers.set(name, url);
     }
@@ -293,34 +299,44 @@ class PluginManager {
     return {};
   }
 
-  public async installPlugin(plugin: { name: string; version: string }): Promise<{ code: number; data?: any }> {
+  public async installPlugin(plugin: {
+    name: string;
+    version: string;
+  }): Promise<{ code: number; data?: any }> {
     return new Promise((resolve) => {
       const moduleSpec = `${plugin.name}@${plugin.version}`;
       const cache = path.join(this.baseDir, 'cache');
 
-      execFile('npm', ['install', '--prefix', cache, moduleSpec], (error, _stdout, stderr) => {
-        if (error) {
-          log.error('install exec error:', error);
-          resolve({ code: -1, data: error.message });
-          return;
-        }
-        if (stderr) console.error(`stderr: ${stderr}`);
-
-        try {
-          const destinationPath = path.join(this.baseDir, plugin.name);
-          if (fs.existsSync(destinationPath)) {
-            deleteFolder(destinationPath);
+      execFile(
+        'npm',
+        ['install', '--prefix', cache, moduleSpec],
+        (error, _stdout, stderr) => {
+          if (error) {
+            log.error('install exec error:', error);
+            resolve({ code: -1, data: error.message });
+            return;
           }
-          fs.renameSync(
-            path.join(cache, 'node_modules', plugin.name),
-            destinationPath,
-          );
-          resolve({ code: 0 });
-        } catch (err) {
-          log.error('install plugin copy failed:', err);
-          resolve({ code: -1, data: 'copy plugin failed! maybe has already existed.' });
-        }
-      });
+          if (stderr) console.error(`stderr: ${stderr}`);
+
+          try {
+            const destinationPath = path.join(this.baseDir, plugin.name);
+            if (fs.existsSync(destinationPath)) {
+              deleteFolder(destinationPath);
+            }
+            fs.renameSync(
+              path.join(cache, 'node_modules', plugin.name),
+              destinationPath,
+            );
+            resolve({ code: 0 });
+          } catch (err) {
+            log.error('install plugin copy failed:', err);
+            resolve({
+              code: -1,
+              data: 'copy plugin failed! maybe has already existed.',
+            });
+          }
+        },
+      );
     });
   }
 }

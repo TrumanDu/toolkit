@@ -84,19 +84,14 @@ function Search() {
               <List.Item
                 tabIndex={index + 1}
                 onClick={(event) => {
-                  window.electron.ipcRenderer.ipcSendSync(
-                    'openPlugin',
-                    item.name,
-                  );
+                  // 异步打开，避免 sendSync 阻塞 UI 直到建窗完成
+                  window.electron.ipcRenderer.ipcSend('openPlugin', item.name);
                   clearInput();
                   event.preventDefault();
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
-                    window.electron.ipcRenderer.ipcSendSync(
-                      'openPlugin',
-                      item.name,
-                    );
+                    window.electron.ipcRenderer.ipcSend('openPlugin', item.name);
                     clearInput();
                     event.preventDefault();
                   }

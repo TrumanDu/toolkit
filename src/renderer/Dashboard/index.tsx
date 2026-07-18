@@ -173,12 +173,16 @@ function Dashboard() {
   };
 
   const handleOpenPlugin = (name: string) => {
-    try {
-      window.electron.ipcRenderer.ipcSendSync('openPlugin', name);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-    }
+    // 异步打开，避免 sendSync 阻塞 Dashboard
+    window.electron.ipcRenderer.ipcSend('openPlugin', name);
+  };
+
+  const handlePreparePlugin = (name: string) => {
+    window.electron.ipcRenderer.ipcSend('preparePlugin', name);
+  };
+
+  const handleCancelPreparePlugin = (name: string) => {
+    window.electron.ipcRenderer.ipcSend('cancelPreparePlugin', name);
   };
 
   const handleRemovePlugin = (name: string) => {
@@ -262,6 +266,8 @@ function Dashboard() {
             <InstalledPlugins
               plugins={allPlugins}
               onOpen={handleOpenPlugin}
+              onPrepare={handlePreparePlugin}
+              onCancelPrepare={handleCancelPreparePlugin}
               onRemove={handleRemovePlugin}
             />
           )}
