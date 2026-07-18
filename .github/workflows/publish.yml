@@ -5,9 +5,15 @@ on:
     tags:
       - 'v*'
 
+# 创建/更新 Release 需要写权限
+permissions:
+  contents: write
+
 jobs:
-  publish:
+  # 各平台只打包，不 publish，避免并行抢建多个同 tag Release
+  build:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-latest
@@ -31,7 +37,43 @@ jobs:
           npm install
           npm run build
 
-      - name: Publish releases
+      - name: Package (no publish)
         env:
+          # 部分签名/公证脚本可能读取；此处不上传 Release
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm exec electron-builder -- --publish always --${{ matrix.platform }}
+        run: npm exec electron-builder -- --publish never --${{ matrix.platform }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: release/build/*
+          if-no-files-found: error
+          retention-days: 7
+
+  # 单一 job 汇总产物，只创建一个 GitHub Release
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: release-*
+          merge-multiple: true
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          files: artifacts/*
+          fail_on_unmatched_files: true
+          draft: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
